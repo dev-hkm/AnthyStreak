@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp"
+    android:height="100dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <path
+        android:fillColor="@color/widget_flame_idle_inner"
+        android:pathData="M50,4 C69,20 80,38 79,58 C78,75 65,88 50,96 C35,88 22,75 21,58 C20,38 31,20 50,4 Z" />
+</vector>

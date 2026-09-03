@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="widget_surface">#111111</color>
+    <color name="widget_outline">#383838</color>
+    <color name="widget_text_primary">#F2F2F2</color>
+    <color name="widget_text_muted">#B8B8B8</color>
+    <color name="widget_action_surface">#F4F4F4</color>
+    <color name="widget_action_text">#171717</color>
+    <color name="widget_flame_idle_outer">#555555</color>
+    <color name="widget_flame_idle_inner">#777777</color>
+    <color name="widget_flame_idle_glow">#20FFFFFF</color>
+</resources>

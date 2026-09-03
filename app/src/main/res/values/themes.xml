@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.StreakWidget" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">#FCFCFC</item>
+        <item name="android:colorAccent">#151515</item>
+        <item name="android:statusBarColor">#FCFCFC</item>
+        <item name="android:navigationBarColor">#FCFCFC</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+</resources>

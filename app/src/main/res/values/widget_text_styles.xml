@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- API 24-25 cannot resolve bundled XML font families; use a serif fallback. -->
+    <style name="WidgetText">
+        <item name="android:fontFamily">serif</item>
+    </style>
+</resources>
