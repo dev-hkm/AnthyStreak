@@ -4,7 +4,8 @@
     android:height="100dp"
     android:viewportWidth="100"
     android:viewportHeight="100">
+    <!-- Same broad, rounded silhouette used by the in-app flame. -->
     <path
         android:fillColor="@color/widget_flame_idle_outer"
-        android:pathData="M50,4 C76,21 91,43 90,64 C89,80 76,92 50,98 C24,92 11,80 10,64 C9,43 24,21 50,4 Z" />
+        android:pathData="M50,6 C79,30 92,65 50,95 C8,65 21,30 50,6 Z" />
 </vector>

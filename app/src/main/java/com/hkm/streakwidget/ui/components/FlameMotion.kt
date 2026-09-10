@@ -23,7 +23,14 @@ data class FlameMotionFrame(
     val haloAlpha: Float = 1f,
     val ringProgress: Float = 0f,
     val ringAlpha: Float = 0f,
-    val sparkProgress: Float = 0f
+    val sparkProgress: Float = 0f,
+    /** White-hot flash overlay, peaks mid-bloom then decays. 0 outside ignition. */
+    val flashAlpha: Float = 0f,
+    /** Second, delayed shockwave ring for a richer burst. */
+    val ring2Progress: Float = 0f,
+    val ring2Alpha: Float = 0f,
+    /** Inner-core breathing multiplier, >1 while energy is high. */
+    val corePulse: Float = 1f
 )
 
 internal fun flameElapsedMillisAt(startedAtNanos: Long, nowNanos: Long): Long =
@@ -51,7 +58,9 @@ fun ignitionFrameAt(elapsedMs: Int): FlameMotionFrame {
                 glowScale = lerp(.86f, .7f, progress),
                 haloAlpha = lerp(.36f, .24f, progress),
                 emberProgress = emberProgress,
-                sparkProgress = sparkProgress
+                sparkProgress = sparkProgress,
+                flashAlpha = 0f,
+                corePulse = lerp(1f, .94f, progress)
             )
         }
 
@@ -67,7 +76,11 @@ fun ignitionFrameAt(elapsedMs: Int): FlameMotionFrame {
                 ringProgress = progress * .42f,
                 ringAlpha = (1f - progress * .18f).coerceIn(0f, 1f),
                 emberProgress = emberProgress,
-                sparkProgress = sparkProgress
+                sparkProgress = sparkProgress,
+                flashAlpha = sin(progress * PI.toFloat()).coerceIn(0f, 1f),
+                ring2Progress = (progress * .3f).coerceIn(0f, 1f),
+                ring2Alpha = (progress * .65f).coerceIn(0f, 1f),
+                corePulse = lerp(.94f, 1.14f, progress)
             )
         }
 
@@ -83,7 +96,11 @@ fun ignitionFrameAt(elapsedMs: Int): FlameMotionFrame {
                 ringProgress = lerp(.42f, .82f, progress),
                 ringAlpha = lerp(.82f, .42f, progress),
                 emberProgress = emberProgress,
-                sparkProgress = sparkProgress
+                sparkProgress = sparkProgress,
+                flashAlpha = lerp(.55f, 0f, progress),
+                ring2Progress = lerp(.3f, .74f, progress),
+                ring2Alpha = lerp(.65f, .38f, progress),
+                corePulse = lerp(1.14f, 1.03f, progress)
             )
         }
 
@@ -101,7 +118,11 @@ fun ignitionFrameAt(elapsedMs: Int): FlameMotionFrame {
                 ringProgress = lerp(.82f, 1f, progress),
                 ringAlpha = lerp(.42f, 0f, progress),
                 emberProgress = emberProgress,
-                sparkProgress = sparkProgress
+                sparkProgress = sparkProgress,
+                flashAlpha = 0f,
+                ring2Progress = lerp(.74f, 1f, progress),
+                ring2Alpha = lerp(.38f, 0f, progress),
+                corePulse = (1f + .03f * envelope * wave).coerceIn(.97f, 1.03f)
             )
         }
 
@@ -114,15 +135,18 @@ fun steadyFrameAt(elapsedMs: Long, seed: Int): FlameMotionFrame {
     val seedPhase = seed * 0.6180339887498948
     val first = sin(time * (2.0 * PI / 1_537.0) + seedPhase)
     val second = sin(time * (2.0 * PI / 2_473.0) + seedPhase * 1.7 + 0.83)
+    // Fast lick: the tip of a real flame darts at a higher frequency than its body sway.
+    val third = sin(time * (2.0 * PI / 613.0) + seedPhase * 2.3 + 0.41)
     val emberProgress = (elapsedMs.coerceAtLeast(0L) % 1_700L) / 1_700f
 
     return FlameMotionFrame(
         scaleX = (1.0 + first * .010 - second * .005).toFloat().coerceIn(.985f, 1.015f),
-        scaleY = (1.0 + first * .017 + second * .007).toFloat().coerceIn(.976f, 1.024f),
-        tipOffsetX = (first * .025 + second * .012).toFloat().coerceIn(-.037f, .037f),
-        shoulderOffsetX = (second * .011 - first * .006).toFloat().coerceIn(-.017f, .017f),
+        scaleY = (1.0 + first * .017 + second * .007 + third * .003).toFloat().coerceIn(.976f, 1.024f),
+        tipOffsetX = (first * .022 + second * .009 + third * .006).toFloat().coerceIn(-.037f, .037f),
+        shoulderOffsetX = (second * .010 - first * .005 + third * .003).toFloat().coerceIn(-.017f, .017f),
         glowScale = (1.0 + first * .025 + second * .015).toFloat().coerceIn(.96f, 1.04f),
-        emberProgress = emberProgress
+        emberProgress = emberProgress,
+        corePulse = (1.0 + first * .018 + third * .006).toFloat().coerceIn(.982f, 1.018f)
     )
 }
 

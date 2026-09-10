@@ -1,5 +1,37 @@
 # Changelog
 
+## 1.4.0 — 2026-09-08
+
+### Added
+
+- Bonsai Tree Visual Theme: Introduced organic growth visualization adapting through 5 stages (Seed, Sprout, Sapling, Bonsai, Blooming) according to streak days.
+- Nurture Ritual Animation: Gentle dew drop watering animation with ripple splash and blooming blossoms upon check-in.
+- Visual Theme Selector in Goal Editor: Easily switch any daily goal between Flame and Bonsai Tree.
+
+## 1.3.3 — 2026-09-08
+
+### Changed
+
+- Removed the fire sound effect from the check-in ritual; the experience is fully visual again.
+
+## 1.3.1 — 2026-09-04
+
+### Fixed
+
+- Slimmed the flame back down: tall narrow silhouette with a sharp crown tip and slim waist, in-app and widget alike.
+- Fixed ghost rings showing behind the flame before check-in — the ignition burst overlay now only draws during the actual 1.8s ritual.
+- Livelier idle burn: added a fast flame-lick harmonic so the tip darts like a real fire while the body sway stays calm.
+
+## 1.3.0 — 2026-09-04
+
+### Flame glow-up
+
+- Rebuilt the in-app flame with four depth layers: deep ember body, glowing mid, white-hot core, and hot nucleus, plus rim light, ember bed, and grounded shadow.
+- Richer ignition ritual (still 1.8s): white-hot flash bloom, twin shockwave rings, 14 rising embers, and a 12-ray spark burst with a hot tip spark.
+- Added a matching check-in burst behind the hero flame: early flash plus expanding accent rings with a spring scale punch.
+- Redesigned the homescreen widget flame: new premium silhouette with leaning crown tip, mid glow layer, hot core with bright heart, and a true radial halo.
+- Widget ignition now lights all four flame layers in lock-step with the existing 690ms ritual.
+
 ## 1.2.0 — 2026-08-10
 
 ### AnthyStreak identity and typography

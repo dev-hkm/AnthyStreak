@@ -110,16 +110,19 @@ class WidgetRenderStateTest {
         assertEquals(
             listOf(
                 WidgetIgnitionStage.ANTICIPATION,
+                WidgetIgnitionStage.ANTICIPATION,
+                WidgetIgnitionStage.BLOOM,
                 WidgetIgnitionStage.BLOOM,
                 WidgetIgnitionStage.OVERSHOOT,
+                WidgetIgnitionStage.OVERSHOOT,
+                WidgetIgnitionStage.SETTLED,
                 WidgetIgnitionStage.SETTLED
             ),
             frames.map(WidgetIgnitionFrame::stage)
         )
         assertEquals(0L, frames.first().atMillis)
         assertTrue(frames.zipWithNext().all { (first, second) -> first.atMillis < second.atMillis })
-        assertTrue(frames.last().atMillis in 600L..750L)
-        assertTrue(frames.all { it.flameAlpha in 180..255 })
+        assertTrue(frames.all { it.outerAlpha in 150..255 })
         assertTrue(frames.all { it.glowAlpha in 0..255 })
     }
 

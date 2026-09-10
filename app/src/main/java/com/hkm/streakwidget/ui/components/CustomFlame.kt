@@ -1,34 +1,27 @@
 package com.hkm.streakwidget.ui.components
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameNanos
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-import kotlin.math.PI
-import kotlin.math.cos
 import kotlin.math.sin
 
-enum class FlameState {
-    IDLE,
-    IGNITING,
-    ACTIVE,
-    COMPLETED,
-    BROKEN
-}
+enum class FlameState { IDLE, IGNITING, ACTIVE, COMPLETED, BROKEN }
 
 @Composable
 fun CustomFlame(
@@ -38,220 +31,98 @@ fun CustomFlame(
     flameColor: Color = Color(0xFFFF5722),
     ignitionEventKey: Any? = state
 ) {
-    val elapsedMs = rememberFlameClock(state, ignitionEventKey)
-    val motion = if (state == FlameState.IGNITING) {
-        ignitionFrameAt(elapsedMs.coerceAtMost(Int.MAX_VALUE.toLong()).toInt())
-    } else {
-        val safeScale = animationScale.takeIf(Float::isFinite)?.coerceAtLeast(.01f) ?: 1f
-        steadyFrameAt((elapsedMs * safeScale).toLong(), state.ordinal)
-    }
-
-    Canvas(modifier = modifier) {
-        val width = size.width
-        val height = size.height
-
-        val outerColors = when (state) {
-            FlameState.IDLE -> listOf(Color(0xFF555555), Color(0xFF333333))
-            FlameState.IGNITING -> listOf(flameColor.lighten(0.16f), flameColor.darken(0.12f))
-            FlameState.ACTIVE -> listOf(flameColor, flameColor.darken(0.18f))
-            FlameState.COMPLETED -> listOf(flameColor.lighten(0.22f), flameColor)
-            FlameState.BROKEN -> listOf(Color(0xFF555555), Color(0xFF303030))
-        }
-
-        val innerColors = when (state) {
-            FlameState.IDLE -> listOf(Color(0xFF777777), Color(0xFF555555))
-            FlameState.IGNITING -> listOf(Color.White, flameColor.lighten(0.42f))
-            FlameState.ACTIVE -> listOf(flameColor.lighten(0.68f), flameColor.lighten(0.28f))
-            FlameState.COMPLETED -> listOf(Color.White, flameColor.lighten(0.5f))
-            FlameState.BROKEN -> listOf(Color(0xFF7A7A7A), Color(0xFF4A4A4A))
-        }
-
-        val glowColor = when (state) {
-            FlameState.IDLE -> Color.Transparent
-            FlameState.IGNITING -> flameColor.copy(alpha = 0.52f)
-            FlameState.ACTIVE -> flameColor.copy(alpha = 0.2f)
-            FlameState.COMPLETED -> flameColor.lighten(0.45f).copy(alpha = 0.35f)
-            FlameState.BROKEN -> Color(0xFF777777).copy(alpha = 0.1f)
-        }
-
-        if (state != FlameState.IDLE) {
-            val haloAlpha = (glowColor.alpha * motion.haloAlpha).coerceIn(0f, 1f)
-            val halo = glowColor.copy(alpha = haloAlpha)
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(halo, halo.copy(alpha = haloAlpha * .38f), Color.Transparent),
-                    center = Offset(width / 2f, height * .57f),
-                    radius = width * .6f * motion.glowScale
-                )
-            )
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(halo.copy(alpha = haloAlpha * .34f), Color.Transparent),
-                    center = Offset(width / 2f, height * .62f),
-                    radius = width * .31f * motion.glowScale
-                )
-            )
-        }
-
-        if (state == FlameState.IGNITING && motion.ringAlpha > .01f) {
-            val ringRadius = width * (.31f + .46f * motion.ringProgress)
-            drawCircle(
-                color = glowColor.copy(alpha = (.48f * motion.ringAlpha).coerceIn(0f, .48f)),
-                radius = ringRadius,
-                center = Offset(width / 2f, height * .57f),
-                style = Stroke(width = width * .009f)
-            )
-            drawCircle(
-                color = Color.White.copy(alpha = (.12f * motion.ringAlpha).coerceIn(0f, .12f)),
-                radius = ringRadius * .88f,
-                center = Offset(width / 2f, height * .57f),
-                style = Stroke(width = width * .003f)
-            )
-        }
-
-        if (state == FlameState.IGNITING || state == FlameState.ACTIVE || state == FlameState.COMPLETED) {
-            val emberCount = when (state) {
-                FlameState.IGNITING -> 8
-                FlameState.COMPLETED -> 4
-                else -> 2
-            }
-            repeat(emberCount) { index ->
-                val phase = (motion.emberProgress + index * .271f) % 1f
-                val drift = sin((phase * 2f * PI.toFloat()) + index * 1.37f)
-                val x = width * (.5f + drift * .16f)
-                val y = height * (.73f - phase * .43f)
-                val shrink = (1f - phase).coerceIn(0f, 1f)
-                drawCircle(
-                    color = if (state == FlameState.ACTIVE) flameColor.lighten(.5f) else Color.White,
-                    radius = width * .018f * shrink,
-                    center = Offset(x, y),
-                    alpha = shrink * .72f
-                )
-            }
-
-            if (state == FlameState.IGNITING) {
-                repeat(9) { index ->
-                    val phase = (motion.sparkProgress + index * .113f) % 1f
-                    val travel = phase * (2f - phase)
-                    val angle = -PI.toFloat() / 2f + (index - 4) * .22f
-                    val startDistance = width * (.07f + (index % 3) * .018f)
-                    val endDistance = width * (.25f + (index % 4) * .045f)
-                    val start = Offset(
-                        x = width * .5f + cos(angle) * startDistance,
-                        y = height * .68f + sin(angle) * startDistance
-                    )
-                    val end = Offset(
-                        x = width * .5f + cos(angle) * (startDistance + endDistance * travel),
-                        y = height * .68f + sin(angle) * (startDistance + endDistance * travel)
-                    )
-                    val alpha = ((1f - phase) * (1f - phase) * motion.ringAlpha).coerceIn(0f, .8f)
-                    drawLine(
-                        color = Color.White.copy(alpha = alpha),
-                        start = start,
-                        end = end,
-                        strokeWidth = width * (.006f + (index % 2) * .002f)
-                    )
-                    drawCircle(
-                        color = flameColor.lighten(.58f).copy(alpha = alpha),
-                        radius = width * (.009f + (index % 3) * .002f) * (1f - phase),
-                        center = end
-                    )
-                }
-            }
-        }
-
-        scale(
-            scaleX = motion.scaleX,
-            scaleY = motion.scaleY,
-            pivot = Offset(width * .5f, height * .95f)
-        ) {
-            val outerTipX = width * (.5f + motion.tipOffsetX)
-            val outerPath = Path().apply {
-                moveTo(outerTipX, height * .1f)
-                cubicTo(
-                    width * (.85f + motion.shoulderOffsetX), height * .35f,
-                    width * .95f, height * .7f,
-                    width * .5f, height * .95f
-                )
-                cubicTo(
-                    width * .05f, height * .7f,
-                    width * (.15f + motion.shoulderOffsetX), height * .35f,
-                    outerTipX, height * .1f
-                )
-                close()
-            }
-
-            drawPath(
-                path = outerPath,
-                brush = Brush.verticalGradient(
-                    colors = outerColors,
-                    startY = height * .1f,
-                    endY = height * .95f
-                )
-            )
-        }
-
-        scale(
-            scaleX = motion.scaleX * .7f,
-            scaleY = motion.scaleY * .7f,
-            pivot = Offset(width * .5f, height * .9f)
-        ) {
-            val innerTipX = width * (.5f - motion.tipOffsetX * .55f)
-            val innerPath = Path().apply {
-                moveTo(innerTipX, height * .2f)
-                cubicTo(
-                    width * (.8f - motion.shoulderOffsetX * .4f), height * .4f,
-                    width * .9f, height * .7f,
-                    width * .5f, height * .9f
-                )
-                cubicTo(
-                    width * .1f, height * .7f,
-                    width * (.2f - motion.shoulderOffsetX * .4f), height * .4f,
-                    innerTipX, height * .2f
-                )
-                close()
-            }
-
-            drawPath(
-                path = innerPath,
-                brush = Brush.verticalGradient(
-                    colors = innerColors,
-                    startY = height * .2f,
-                    endY = height * .9f
-                )
-            )
+    val lit = state == FlameState.IGNITING || state == FlameState.ACTIVE || state == FlameState.COMPLETED
+    // Keep values across state changes so undo and completion never snap.
+    val heat = remember { Animatable(if (lit && state != FlameState.IGNITING) 1f else 0f) }
+    val lift = remember { Animatable(0f) }
+    val bloom = remember { Animatable(0f) }
+    val quench = remember { Animatable(0f) }
+    val core = remember { Animatable(0f) }
+    val squash = remember { Animatable(0f) }
+    var seconds by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(lit) {
+        if (lit) {
+            val start = withFrameNanos { it }
+            val initial = seconds
+            while (isActive) withFrameNanos { seconds = initial + (it - start) / 1_000_000_000f }
         }
     }
-}
-
-@Composable
-private fun rememberFlameClock(
-    state: FlameState,
-    ignitionEventKey: Any?
-): Long {
-    var elapsedMs by remember(state, ignitionEventKey) { mutableLongStateOf(0L) }
-
     LaunchedEffect(state, ignitionEventKey) {
-        val startedAt = withFrameNanos { it }
-        while (isActive) {
-            withFrameNanos { now ->
-                elapsedMs = flameElapsedMillisAt(startedAt, now)
+        val extinguishing = !lit && heat.value > .01f
+        coroutineScope {
+            launch {
+                if (extinguishing) delay(200)
+                heat.animateTo(if (lit) 1f else 0f, tween(if (lit) 1250 else 1050, easing = FastOutSlowInEasing))
+            }
+            launch {
+                if (extinguishing) {
+                    quench.animateTo(1f, tween(420, easing = FastOutSlowInEasing))
+                    delay(140)
+                }
+                quench.animateTo(0f, spring(dampingRatio = .9f, stiffness = 35f))
+            }
+            launch {
+                if (state == FlameState.IGNITING) {
+                    core.animateTo(-.09f, tween(240, easing = FastOutSlowInEasing))
+                    core.animateTo(.1f, tween(650, easing = FastOutSlowInEasing))
+                }
+                core.animateTo(0f, spring(dampingRatio = .8f, stiffness = 22f))
+            }
+            launch {
+                if (state == FlameState.IGNITING) {
+                    lift.animateTo(-.055f, tween(280, easing = FastOutSlowInEasing))
+                    lift.animateTo(.095f, tween(770, easing = FastOutSlowInEasing))
+                    // A visible, centered recoil: the flame compresses before settling.
+                    squash.animateTo(.16f, tween(260, easing = FastOutSlowInEasing))
+                    squash.animateTo(0f, spring(dampingRatio = .82f, stiffness = 28f))
+                }
+                lift.animateTo(0f, spring(dampingRatio = .78f, stiffness = 24f))
+            }
+            launch {
+                if (state == FlameState.IGNITING) {
+                    bloom.animateTo(1f, tween(1050, easing = FastOutSlowInEasing))
+                }
+                bloom.animateTo(0f, tween(2300, easing = FastOutSlowInEasing))
             }
         }
     }
-    return elapsedMs
+    Canvas(modifier) {
+        val warmth = heat.value.coerceIn(0f, 1f)
+        val energy = bloom.value.coerceIn(0f, 1f)
+        val collapse = quench.value.coerceIn(0f, 1f)
+        val t = seconds * (animationScale.takeIf { it.isFinite() }?.coerceIn(0f, 3f) ?: 1f)
+        val breath = sin(t * 2.1f) * (.008f + energy * .012f) * warmth
+        val lean = (sin(t * 1.7f) * .014f + sin(t * 2.9f) * .004f + sin(t * 4.1f) * energy * .015f) * warmth
+        val w = size.width
+        val h = size.height
+        val center = Offset(w * .5f, h * (.58f + collapse * .16f))
+        drawCircle(
+            brush = Brush.radialGradient(listOf(flameColor.copy(alpha = (.27f + energy * .18f) * warmth), flameColor.copy(alpha = (.08f + energy * .06f) * warmth), Color.Transparent), center, w * (.72f + energy * .13f)),
+            radius = w * (.72f + energy * .13f), center = center
+        )
+        scale(1f - lift.value * .35f - breath * .4f + collapse * .07f + squash.value * .12f, 1f + lift.value + breath - collapse * .18f - squash.value, Offset(w * .5f, h * .92f)) {
+            val outer = Path().apply {
+                moveTo(w * (.5f + lean), h * .09f)
+                cubicTo(w * (.79f + lean), h * .31f, w * .92f, h * .69f, w * .5f, h * .93f)
+                cubicTo(w * .08f, h * .69f, w * (.21f + lean), h * .31f, w * (.5f + lean), h * .09f)
+                close()
+            }
+            drawPath(outer, Brush.verticalGradient(listOf(
+                lerp(Color(0xFF626262), lerp(flameColor, Color.White, .16f + energy * .15f), warmth),
+                lerp(Color(0xFF363636), lerp(flameColor, Color.Black, .16f), warmth)
+            ), startY = h * .09f, endY = h * .93f))
+            scale(1f - collapse * .2f + squash.value * .08f, 1f + core.value - collapse * .42f - squash.value * .7f, Offset(w * .5f, h * .88f)) {
+            val inner = Path().apply {
+                moveTo(w * (.5f - lean * .5f), h * (.43f - lift.value * .35f))
+                cubicTo(w * .68f, h * .57f, w * .78f, h * .77f, w * .5f, h * .88f)
+                cubicTo(w * .22f, h * .77f, w * .32f, h * .57f, w * (.5f - lean * .5f), h * (.43f - lift.value * .35f))
+                close()
+            }
+            drawPath(inner, Brush.verticalGradient(listOf(
+                lerp(Color(0xFF909090), lerp(flameColor, Color.White, .82f + energy * .14f), warmth),
+                lerp(Color(0xFF595959), lerp(flameColor, Color.White, .36f), warmth)
+            ), startY = h * .43f, endY = h * .88f))
+            }
+        }
+    }
 }
-
-private fun Color.lighten(amount: Float): Color = Color(
-    red = red + (1f - red) * amount,
-    green = green + (1f - green) * amount,
-    blue = blue + (1f - blue) * amount,
-    alpha = alpha
-)
-
-private fun Color.darken(amount: Float): Color = Color(
-    red = red * (1f - amount),
-    green = green * (1f - amount),
-    blue = blue * (1f - amount),
-    alpha = alpha
-)

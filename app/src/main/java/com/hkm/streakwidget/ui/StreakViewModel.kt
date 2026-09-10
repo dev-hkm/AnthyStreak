@@ -78,7 +78,8 @@ class StreakViewModel(application: Application) : AndroidViewModel(application) 
         reminderEnabled: Boolean,
         reminderTime: String?,
         goalType: GoalType = GoalType.GOAL,
-        todoItems: List<TodoItem> = emptyList()
+        todoItems: List<TodoItem> = emptyList(),
+        theme: VisualTheme = VisualTheme.FLAME
     ) {
         val cleanName = name.trim()
         if (cleanName.isEmpty()) return
@@ -89,7 +90,7 @@ class StreakViewModel(application: Application) : AndroidViewModel(application) 
             colorHex = colorHex,
             reminderEnabled = reminderEnabled,
             reminderTime = reminderTime?.takeIf { it.isNotBlank() },
-            theme = VisualTheme.FLAME,
+            theme = theme,
             goalType = goalType,
             todoItems = if (goalType == GoalType.CHECKLIST) todoItems.filter { it.title.isNotBlank() } else emptyList()
         )
@@ -104,7 +105,8 @@ class StreakViewModel(application: Application) : AndroidViewModel(application) 
         reminderEnabled: Boolean,
         reminderTime: String?,
         goalType: GoalType = GoalType.GOAL,
-        todoItems: List<TodoItem> = emptyList()
+        todoItems: List<TodoItem> = emptyList(),
+        theme: VisualTheme = VisualTheme.FLAME
     ) {
         val current = _focusedHabit.value ?: return
         val cleanName = name.trim()
@@ -116,6 +118,7 @@ class StreakViewModel(application: Application) : AndroidViewModel(application) 
             colorHex = colorHex,
             reminderEnabled = reminderEnabled,
             reminderTime = reminderTime?.takeIf { it.isNotBlank() },
+            theme = theme,
             goalType = goalType,
             todoItems = if (goalType == GoalType.CHECKLIST) todoItems.filter { it.title.isNotBlank() } else emptyList()
         ))

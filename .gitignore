@@ -13,3 +13,13 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Private / local tooling & caches
+.wrangler/
+.superpowers/
+.codex-remote-attachments/
+*.apk
+*.jks
+*.keystore
+secrets.*
+credentials.*

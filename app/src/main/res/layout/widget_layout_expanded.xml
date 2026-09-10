@@ -40,6 +40,14 @@
                     android:src="@drawable/ic_widget_flame_outer" />
 
                 <ImageView
+                    android:id="@+id/widget_flame_mid"
+                    android:layout_width="70dp"
+                    android:layout_height="70dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_widget_flame_mid" />
+
+                <ImageView
                     android:id="@+id/widget_flame_inner"
                     android:layout_width="58dp"
                     android:layout_height="58dp"
@@ -53,15 +61,20 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:gravity="bottom"
-                android:orientation="horizontal">
+                android:gravity="center"
+                android:orientation="vertical">
 
                 <TextView
                     style="@style/WidgetText"
                     android:id="@+id/widget_streak_count"
-                    android:layout_width="wrap_content"
+                    android:layout_width="64dp"
                     android:layout_height="wrap_content"
                     android:includeFontPadding="false"
+                    android:gravity="center"
+                    android:autoSizeTextType="uniform"
+                    android:autoSizeMinTextSize="16sp"
+                    android:autoSizeMaxTextSize="36sp"
+                    android:autoSizeStepGranularity="1sp"
                     android:text="@string/widget_preview_count"
                     android:textColor="#171717"
                     android:textSize="36sp"
@@ -72,7 +85,7 @@
                     android:id="@+id/widget_streak_label"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="5dp"
+                    android:layout_marginTop="1dp"
                     android:includeFontPadding="false"
                     android:text="@string/widget_preview_days"
                     android:textColor="#696969"

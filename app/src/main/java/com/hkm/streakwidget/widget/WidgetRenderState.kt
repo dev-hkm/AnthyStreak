@@ -33,16 +33,22 @@ internal enum class WidgetIgnitionStage { ANTICIPATION, BLOOM, OVERSHOOT, SETTLE
 internal data class WidgetIgnitionFrame(
     val stage: WidgetIgnitionStage,
     val atMillis: Long,
-    val flameAlpha: Int,
+    val outerAlpha: Int,
+    val midAlpha: Int,
+    val innerAlpha: Int,
     val glowAlpha: Int
 )
 
 internal object WidgetIgnitionSequence {
     fun frames(): List<WidgetIgnitionFrame> = listOf(
-        WidgetIgnitionFrame(WidgetIgnitionStage.ANTICIPATION, atMillis = 0L, flameAlpha = 205, glowAlpha = 32),
-        WidgetIgnitionFrame(WidgetIgnitionStage.BLOOM, atMillis = 190L, flameAlpha = 255, glowAlpha = 210),
-        WidgetIgnitionFrame(WidgetIgnitionStage.OVERSHOOT, atMillis = 440L, flameAlpha = 245, glowAlpha = 255),
-        WidgetIgnitionFrame(WidgetIgnitionStage.SETTLED, atMillis = 690L, flameAlpha = 255, glowAlpha = 120)
+        WidgetIgnitionFrame(WidgetIgnitionStage.ANTICIPATION, 0L, 150, 92, 50, 24),
+        WidgetIgnitionFrame(WidgetIgnitionStage.ANTICIPATION, 220L, 210, 135, 82, 70),
+        WidgetIgnitionFrame(WidgetIgnitionStage.BLOOM, 520L, 255, 220, 150, 178),
+        WidgetIgnitionFrame(WidgetIgnitionStage.BLOOM, 900L, 255, 255, 235, 255),
+        WidgetIgnitionFrame(WidgetIgnitionStage.OVERSHOOT, 1260L, 246, 255, 255, 220),
+        WidgetIgnitionFrame(WidgetIgnitionStage.OVERSHOOT, 1600L, 255, 245, 220, 176),
+        WidgetIgnitionFrame(WidgetIgnitionStage.SETTLED, 1980L, 255, 235, 210, 135),
+        WidgetIgnitionFrame(WidgetIgnitionStage.SETTLED, 2380L, 255, 225, 200, 105)
     )
 }
 

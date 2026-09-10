@@ -18,7 +18,9 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -72,6 +74,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -82,7 +85,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -101,7 +106,9 @@ import com.hkm.streakwidget.domain.StreakCalculator
 import com.hkm.streakwidget.model.GoalType
 import com.hkm.streakwidget.model.Habit
 import com.hkm.streakwidget.model.TodoItem
+import com.hkm.streakwidget.model.VisualTheme
 import com.hkm.streakwidget.ui.StreakViewModel
+import com.hkm.streakwidget.ui.components.CustomBonsai
 import com.hkm.streakwidget.ui.components.CustomFlame
 import com.hkm.streakwidget.ui.components.FlameState
 import com.hkm.streakwidget.ui.components.LucideIcons
@@ -210,10 +217,10 @@ fun MainScreen(viewModel: StreakViewModel) {
                             else -> scope.launch {
                                 tapHaptic()
                                 ignitionTargetId = habitId
-                                delay(620)
+                                delay(1050)
                                 viewModel.toggleToday(habitId)
                                 confirmHaptic()
-                                delay(1_180)
+                                delay(2550)
                                 if (ignitionTargetId == habitId) ignitionTargetId = null
                             }
                         }
@@ -266,11 +273,11 @@ fun MainScreen(viewModel: StreakViewModel) {
             habit = editorTarget,
             onDismiss = { showEditor = false },
             onHaptic = tapHaptic,
-            onSave = { name, note, color, reminder, time, type, todoItems ->
+            onSave = { name, note, color, reminder, time, type, todoItems, theme ->
                 if (editorTarget == null) {
-                    viewModel.createHabit(name, note, color, reminder, time, type, todoItems)
+                    viewModel.createHabit(name, note, color, reminder, time, type, todoItems, theme)
                 } else {
-                    viewModel.updateFocusedHabit(name, note, color, reminder, time, type, todoItems)
+                    viewModel.updateFocusedHabit(name, note, color, reminder, time, type, todoItems, theme)
                 }
                 showEditor = false
                 confirmHaptic()
@@ -444,6 +451,7 @@ private fun TodayScreen(
     ) {
         AnimatedContent(
             targetState = focused,
+            contentKey = { it?.id },
             modifier = Modifier
                 .fillMaxSize(),
             transitionSpec = { (fadeIn(tween(220)) + scaleIn(initialScale = 0.97f)) togetherWith (fadeOut(tween(160)) + scaleOut(targetScale = 0.97f)) },
@@ -543,12 +551,24 @@ private fun FocusCard(
                 .offset(y = (-12).dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            CustomFlame(
-                state = flameState,
-                modifier = Modifier.size(208.dp),
-                flameColor = habit.accent(),
-                ignitionEventKey = habit.id
-            )
+            Box(contentAlignment = Alignment.Center) {
+                if (habit.theme == VisualTheme.TREE) {
+                    CustomBonsai(
+                        streakCount = habit.streakCount,
+                        state = flameState,
+                        modifier = Modifier.size(220.dp),
+                        accentColor = habit.accent(),
+                        eventKey = habit.id
+                    )
+                } else {
+                    CustomFlame(
+                        state = flameState,
+                        modifier = Modifier.size(220.dp),
+                        flameColor = habit.accent(),
+                        ignitionEventKey = habit.id
+                    )
+                }
+            }
             Spacer(Modifier.height(2.dp))
             AnimatedContent(
                 targetState = habit.streakCount,
@@ -581,7 +601,7 @@ private fun FocusCard(
         ) {
             AnimatedVisibility(isIgniting) {
                 Text(
-                    "Lighting your streak",
+                    if (habit.theme == VisualTheme.TREE) "Nurturing your bonsai" else "Lighting your streak",
                     color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.ExtraBold,
@@ -603,6 +623,51 @@ private fun FocusCard(
                 Text(if (completed) "Undo check-in" else "Check in", fontWeight = FontWeight.ExtraBold)
             }
         }
+    }
+}
+
+/**
+ * One-shot 1.8s burst that mirrors the flame ignition ritual: an early white
+ * flash, then twin shockwave rings expanding outward behind the flame.
+ */
+@Composable
+private fun IgnitionBurstOverlay(visible: Boolean, flameColor: Color) {
+    val progress = remember { Animatable(0f) }
+    LaunchedEffect(visible) {
+        if (visible) {
+            progress.snapTo(0f)
+            progress.animateTo(1f, tween(durationMillis = 1_800, easing = FastOutSlowInEasing))
+        }
+    }
+    // Never draw outside the ignition ritual: at rest even a faint ring reads as a bug.
+    if (!visible) return
+    val p = progress.value
+    val ring2 = ((p - 0.14f) / 0.86f).coerceIn(0f, 1f)
+    val flash = (1f - p * 3.2f).coerceIn(0f, 1f)
+    Canvas(Modifier.size(272.dp)) {
+        val minSide = size.minDimension
+        if (flash > 0.01f) {
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        Color.White.copy(alpha = 0.5f * flash),
+                        flameColor.copy(alpha = 0.28f * flash),
+                        Color.Transparent
+                    ),
+                    radius = minSide * 0.42f
+                )
+            )
+        }
+        drawCircle(
+            color = flameColor.copy(alpha = (1f - p) * 0.5f),
+            radius = minSide * (0.3f + 0.34f * p),
+            style = Stroke(width = minSide * 0.012f)
+        )
+        drawCircle(
+            color = Color.White.copy(alpha = (1f - ring2) * 0.3f),
+            radius = minSide * (0.26f + 0.3f * ring2),
+            style = Stroke(width = minSide * 0.006f)
+        )
     }
 }
 
@@ -842,12 +907,22 @@ private fun GoalRow(
             )
     ) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            CustomFlame(
-                state = if (presentation.isCompleted) FlameState.COMPLETED else FlameState.ACTIVE,
-                modifier = Modifier.size(42.dp),
-                flameColor = habit.accent(),
-                ignitionEventKey = habit.id
-            )
+            if (habit.theme == VisualTheme.TREE) {
+                CustomBonsai(
+                    streakCount = habit.streakCount,
+                    state = if (presentation.isCompleted) FlameState.COMPLETED else FlameState.ACTIVE,
+                    modifier = Modifier.size(42.dp),
+                    accentColor = habit.accent(),
+                    eventKey = habit.id
+                )
+            } else {
+                CustomFlame(
+                    state = if (presentation.isCompleted) FlameState.COMPLETED else FlameState.ACTIVE,
+                    modifier = Modifier.size(42.dp),
+                    flameColor = habit.accent(),
+                    ignitionEventKey = habit.id
+                )
+            }
             Spacer(Modifier.width(13.dp))
             Column(Modifier.weight(1f)) {
                 Text(
@@ -891,11 +966,12 @@ private fun GoalEditorDialog(
     habit: Habit?,
     onDismiss: () -> Unit,
     onHaptic: () -> Unit,
-    onSave: (String, String, String, Boolean, String?, GoalType, List<TodoItem>) -> Unit
+    onSave: (String, String, String, Boolean, String?, GoalType, List<TodoItem>, VisualTheme) -> Unit
 ) {
     var name by remember(habit?.id) { mutableStateOf(habit?.name.orEmpty()) }
     var note by remember(habit?.id) { mutableStateOf(habit?.motivationNote.orEmpty()) }
     var color by remember(habit?.id) { mutableStateOf(habit?.accent() ?: GoalPalette.options.first().color) }
+    var theme by remember(habit?.id) { mutableStateOf(habit?.theme ?: VisualTheme.FLAME) }
     var goalType by remember(habit?.id) { mutableStateOf(habit?.goalType ?: GoalType.GOAL) }
     val todoItems = remember(habit?.id) {
         mutableStateListOf<TodoItem>().apply { addAll(habit?.todoItems.orEmpty()) }
@@ -930,6 +1006,26 @@ private fun GoalEditorDialog(
                 )
                 OutlinedTextField(name, { name = it }, label = { Text("Goal") }, placeholder = { Text("Workout") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(note, { note = it }, label = { Text("Why it matters (optional)") }, minLines = 2, maxLines = 3, modifier = Modifier.fillMaxWidth())
+
+                Text("VISUAL THEME", fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 1.sp)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ThemeChoiceCard(
+                        modifier = Modifier.weight(1f),
+                        icon = LucideIcons.Flame,
+                        title = "Flame",
+                        subtitle = "Burns brighter",
+                        selected = theme == VisualTheme.FLAME,
+                        onClick = { theme = VisualTheme.FLAME; onHaptic() }
+                    )
+                    ThemeChoiceCard(
+                        modifier = Modifier.weight(1f),
+                        icon = LucideIcons.Sprout,
+                        title = "Bonsai Tree",
+                        subtitle = "Grows with streak",
+                        selected = theme == VisualTheme.TREE,
+                        onClick = { theme = VisualTheme.TREE; onHaptic() }
+                    )
+                }
 
                 Text("FORMAT", fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 1.sp)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -980,8 +1076,8 @@ private fun GoalEditorDialog(
                     }
                 }
 
-                Text("FLAME COLOR", fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 1.sp)
-                Text("This changes your flame only.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                Text(if (theme == VisualTheme.TREE) "ACCENT COLOR" else "FLAME COLOR", fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 1.sp)
+                Text(if (theme == VisualTheme.TREE) "Tints leaves, blossoms, and aura." else "This changes your flame only.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                 val selectedColorIndex = GoalPalette.options.indexOfFirst { it.color == color }.coerceAtLeast(0)
                 val paletteState = rememberLazyListState(
                     initialFirstVisibleItemIndex = (selectedColorIndex - 1).coerceAtLeast(0)
@@ -1030,7 +1126,7 @@ private fun GoalEditorDialog(
         },
         confirmButton = {
             Button(
-                onClick = { onSave(name, note, color.hex(), reminder, time, goalType, todoItems.toList()) },
+                onClick = { onSave(name, note, color.hex(), reminder, time, goalType, todoItems.toList(), theme) },
                 enabled = canSave
             ) {
                 Text(if (habit == null) "Create goal" else "Save changes")
@@ -1038,6 +1134,39 @@ private fun GoalEditorDialog(
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
+}
+
+@Composable
+private fun ThemeChoiceCard(
+    modifier: Modifier,
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    val background by animateColorAsState(
+        if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.surfaceVariant,
+        label = "theme_choice_background"
+    )
+    val foreground by animateColorAsState(
+        if (selected) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onSurface,
+        label = "theme_choice_foreground"
+    )
+    val borderWidth by animateDpAsState(if (selected) 2.dp else 1.dp, label = "theme_choice_border")
+    Column(
+        modifier
+            .clip(RoundedCornerShape(18.dp))
+            .background(background)
+            .border(borderWidth, if (selected) background else MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(18.dp))
+            .clickable(onClick = onClick)
+            .padding(12.dp)
+    ) {
+        Icon(icon, contentDescription = "$title theme", tint = foreground, modifier = Modifier.size(19.dp))
+        Spacer(Modifier.height(12.dp))
+        Text(title, color = foreground, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp)
+        Text(subtitle, color = foreground.copy(alpha = 0.7f), fontSize = 11.sp)
+    }
 }
 
 @Composable

@@ -28,6 +28,15 @@
             android:src="@drawable/ic_widget_flame_outer" />
 
         <ImageView
+            android:id="@+id/widget_flame_mid"
+            android:layout_width="27dp"
+            android:layout_height="27dp"
+            android:layout_gravity="center_horizontal|top"
+            android:layout_marginTop="5dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_widget_flame_mid" />
+
+        <ImageView
             android:id="@+id/widget_flame_inner"
             android:layout_width="21dp"
             android:layout_height="21dp"
@@ -40,15 +49,20 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal|bottom"
-            android:gravity="bottom"
-            android:orientation="horizontal">
+            android:gravity="center"
+            android:orientation="vertical">
 
             <TextView
                 android:id="@+id/widget_streak_count"
                 style="@style/WidgetText"
-                android:layout_width="wrap_content"
+                android:layout_width="44dp"
                 android:layout_height="wrap_content"
                 android:includeFontPadding="false"
+                android:gravity="center"
+                android:autoSizeTextType="uniform"
+                android:autoSizeMinTextSize="11sp"
+                android:autoSizeMaxTextSize="17sp"
+                android:autoSizeStepGranularity="1sp"
                 android:text="@string/widget_preview_count"
                 android:textColor="@color/widget_text_primary"
                 android:textSize="17sp"
@@ -59,7 +73,7 @@
                 style="@style/WidgetText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="2dp"
+                android:layout_marginTop="1dp"
                 android:includeFontPadding="false"
                 android:text="@string/widget_preview_days"
                 android:textColor="@color/widget_text_muted"

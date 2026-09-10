@@ -53,6 +53,10 @@ object LucideIcons {
         get() = chevronRightVector
     val Ellipsis: ImageVector
         get() = ellipsisVector
+    val Flame: ImageVector
+        get() = flameVector
+    val Sprout: ImageVector
+        get() = sproutVector
 
     private val settingsVector: ImageVector by lazy {
         buildIcon("Settings") {
@@ -342,6 +346,50 @@ object LucideIcons {
             lucidePath { moveTo(5f, 12f); horizontalLineTo(5.01f) }
             lucidePath { moveTo(12f, 12f); horizontalLineTo(12.01f) }
             lucidePath { moveTo(19f, 12f); horizontalLineTo(19.01f) }
+        }
+    }
+
+    private val flameVector: ImageVector by lazy {
+        buildIcon("Flame") {
+            lucidePath {
+                moveTo(8.5f, 14.5f)
+                curveTo(8.5f, 16.5f, 10f, 18f, 12f, 18f)
+                curveTo(14f, 18f, 15.5f, 16.5f, 15.5f, 14.5f)
+                curveTo(15.5f, 12.5f, 13f, 11f, 12f, 9f)
+                curveTo(11f, 11f, 8.5f, 12.5f, 8.5f, 14.5f)
+                close()
+            }
+            lucidePath {
+                moveTo(12f, 2f)
+                curveTo(12f, 2f, 6f, 7f, 6f, 14f)
+                curveTo(6f, 17.31f, 8.69f, 20f, 12f, 20f)
+                curveTo(15.31f, 20f, 18f, 17.31f, 18f, 14f)
+                curveTo(18f, 7f, 12f, 2f, 12f, 2f)
+                close()
+            }
+        }
+    }
+
+    private val sproutVector: ImageVector by lazy {
+        buildIcon("Sprout") {
+            lucidePath {
+                moveTo(7f, 20f)
+                horizontalLineTo(17f)
+            }
+            lucidePath {
+                moveTo(10f, 20f)
+                verticalLineTo(14f)
+                curveTo(10f, 9f, 14f, 7f, 20f, 7f)
+                verticalLineTo(9f)
+                curveTo(14f, 9f, 12f, 12f, 12f, 20f)
+            }
+            lucidePath {
+                moveTo(4f, 9f)
+                curveTo(4f, 9f, 4f, 5f, 10f, 5f)
+                curveTo(10f, 9f, 7f, 11f, 4f, 11f)
+                verticalLineTo(9f)
+                close()
+            }
         }
     }
 

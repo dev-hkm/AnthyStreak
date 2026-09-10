@@ -155,6 +155,7 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
             val accent = Color.parseColor(state.accentHex)
             views.setInt(R.id.widget_flame_glow, "setColorFilter", accent)
             views.setInt(R.id.widget_flame_outer, "setColorFilter", accent)
+            views.setInt(R.id.widget_flame_mid, "setColorFilter", lightenedAccent(accent))
             views.setInt(R.id.widget_flame_inner, "setColorFilter", Color.WHITE)
         }
 
@@ -246,10 +247,12 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
             val partial = RemoteViews(context.packageName, size.layoutRes()).apply {
                 setInt(R.id.widget_flame_glow, "setColorFilter", accent)
                 setInt(R.id.widget_flame_outer, "setColorFilter", accent)
+                setInt(R.id.widget_flame_mid, "setColorFilter", lightenedAccent(accent))
                 setInt(R.id.widget_flame_inner, "setColorFilter", Color.WHITE)
                 setInt(R.id.widget_flame_glow, "setImageAlpha", frame.glowAlpha)
-                setInt(R.id.widget_flame_outer, "setImageAlpha", frame.flameAlpha)
-                setInt(R.id.widget_flame_inner, "setImageAlpha", frame.flameAlpha)
+                setInt(R.id.widget_flame_outer, "setImageAlpha", frame.outerAlpha)
+                setInt(R.id.widget_flame_mid, "setImageAlpha", frame.midAlpha)
+                setInt(R.id.widget_flame_inner, "setImageAlpha", frame.innerAlpha)
                 setTextViewText(R.id.widget_streak_count, state.streak.toString())
                 setTextViewText(R.id.widget_streak_label, state.streakLabel)
                 setTextViewText(R.id.widget_status, state.status)
@@ -324,6 +327,16 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
             )
         }
     }
+}
+
+/** Mixes an accent toward white so the widget mid-flame reads as hot glow. */
+private fun lightenedAccent(accent: Int): Int {
+    fun mix(channel: Int): Int = (channel + (255 - channel) * 0.45f).toInt().coerceIn(0, 255)
+    return Color.rgb(
+        mix(Color.red(accent)),
+        mix(Color.green(accent)),
+        mix(Color.blue(accent))
+    )
 }
 
 private fun WidgetSize.layoutRes(): Int = when (this) {

@@ -4,7 +4,12 @@
     android:height="100dp"
     android:viewportWidth="100"
     android:viewportHeight="100">
+    <!-- Hot core seated low in the same flame silhouette. -->
     <path
         android:fillColor="@color/widget_flame_idle_inner"
-        android:pathData="M50,4 C69,20 80,38 79,58 C78,75 65,88 50,96 C35,88 22,75 21,58 C20,38 31,20 50,4 Z" />
+        android:pathData="M50,44 C62,57 66,72 50,84 C34,72 38,57 50,44 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M50,62 C55,67 57,71 56,76 C55,80 53,82 50,83 C47,82 45,80 44,76 C43,71 45,67 50,62 Z"
+        android:fillAlpha="0.85" />
 </vector>
