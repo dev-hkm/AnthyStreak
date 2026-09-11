@@ -39,6 +39,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -105,6 +106,7 @@ import androidx.compose.ui.unit.sp
 import com.hkm.streakwidget.domain.StreakCalculator
 import com.hkm.streakwidget.model.GoalType
 import com.hkm.streakwidget.model.Habit
+import com.hkm.streakwidget.model.StreakNote
 import com.hkm.streakwidget.model.TodoItem
 import com.hkm.streakwidget.model.VisualTheme
 import com.hkm.streakwidget.ui.StreakViewModel
@@ -135,6 +137,7 @@ fun MainScreen(viewModel: StreakViewModel) {
     var showEditor by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
     var showHistory by remember { mutableStateOf(false) }
+    var showNotes by remember { mutableStateOf(false) }
     var showTodos by remember { mutableStateOf(false) }
     var ignitionTargetId by remember { mutableStateOf<String?>(null) }
 
@@ -229,6 +232,10 @@ fun MainScreen(viewModel: StreakViewModel) {
                         showHistory = true
                         tapHaptic()
                     },
+                    onNotes = {
+                        showNotes = true
+                        tapHaptic()
+                    },
                     onOpenTodos = {
                         showTodos = true
                         tapHaptic()
@@ -316,6 +323,15 @@ fun MainScreen(viewModel: StreakViewModel) {
     focused?.let { habit ->
         if (showHistory) {
             HistoryDialog(habit = habit, onDismiss = { showHistory = false }, onHaptic = tapHaptic)
+        }
+        if (showNotes) {
+            NotesDialog(
+                habit = habit,
+                onDismiss = { showNotes = false },
+                onAdd = { viewModel.addNote(it); confirmHaptic() },
+                onDelete = { viewModel.deleteNote(it); tapHaptic() },
+                onHaptic = tapHaptic
+            )
         }
         if (showTodos && habit.goalType == GoalType.CHECKLIST && habit.todoItems.isNotEmpty()) {
             TodoDialog(
@@ -439,6 +455,7 @@ private fun TodayScreen(
     ignitionTargetId: String?,
     onToggleToday: (String) -> Unit,
     onHistory: () -> Unit,
+    onNotes: () -> Unit,
     onOpenTodos: () -> Unit,
     onCreate: () -> Unit,
     onSettings: () -> Unit
@@ -467,6 +484,7 @@ private fun TodayScreen(
                     checkInLocked = ignitionTargetId != null,
                     onToggleToday = onToggleToday,
                     onHistory = onHistory,
+                    onNotes = onNotes,
                     onOpenTodos = onOpenTodos
                 )
             }
@@ -525,6 +543,7 @@ private fun FocusCard(
     checkInLocked: Boolean,
     onToggleToday: (String) -> Unit,
     onHistory: () -> Unit,
+    onNotes: () -> Unit,
     onOpenTodos: () -> Unit
 ) {
     val today = StreakCalculator.todayString()
@@ -612,8 +631,17 @@ private fun FocusCard(
                     modifier = Modifier.padding(bottom = 6.dp)
                 )
             }
-            TextButton(onClick = onHistory) {
-                Text("View progress", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onHistory) {
+                    Text("View progress", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
+                }
+                TextButton(onClick = onNotes) {
+                    Text(
+                        if (habit.notes.isEmpty()) "Add note" else "Notes (${habit.notes.size})",
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
             Spacer(Modifier.height(6.dp))
             Button(
@@ -802,6 +830,82 @@ private fun HistoryDialog(habit: Habit, onDismiss: () -> Unit, onHaptic: () -> U
         TextButton(onClick = { onHaptic(); onDismiss() }) { Text("Close") }
     }
 )
+
+@Composable
+private fun NotesDialog(
+    habit: Habit,
+    onDismiss: () -> Unit,
+    onAdd: (String) -> Unit,
+    onDelete: (String) -> Unit,
+    onHaptic: () -> Unit
+) {
+    var draft by remember(habit.id) { mutableStateOf("") }
+    val notes = habit.notes.sortedWith(
+        compareByDescending<StreakNote> { it.date }.thenByDescending { it.createdAt }
+    )
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(LucideIcons.Plus, contentDescription = null, modifier = Modifier.size(21.dp))
+                Spacer(Modifier.width(9.dp))
+                Text("Streak notes", fontWeight = FontWeight.ExtraBold)
+            }
+        },
+        text = {
+            Column(
+                Modifier
+                    .heightIn(max = 360.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                if (notes.isEmpty()) {
+                    Text("Capture what helped, what happened, or how today felt.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+                } else {
+                    notes.forEach { note ->
+                        Surface(
+                            shape = RoundedCornerShape(17.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.68f)
+                        ) {
+                            Row(
+                                Modifier.padding(start = 13.dp, top = 10.dp, end = 5.dp, bottom = 10.dp),
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(note.date, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 0.8.sp)
+                                    Spacer(Modifier.height(3.dp))
+                                    Text(note.text, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                }
+                                IconButton(onClick = { onHaptic(); onDelete(note.id) }, modifier = Modifier.size(32.dp)) {
+                                    Icon(LucideIcons.Trash2, contentDescription = "Delete note", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
+                                }
+                            }
+                        }
+                    }
+                }
+                OutlinedTextField(
+                    value = draft,
+                    onValueChange = { draft = it },
+                    label = { Text("New note") },
+                    placeholder = { Text("What happened today?") },
+                    minLines = 2,
+                    maxLines = 4,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onAdd(draft)
+                    draft = ""
+                },
+                enabled = draft.trim().isNotEmpty()
+            ) { Text("Add note") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Close") } }
+    )
+}
 
 @Composable
 private fun Stat(label: String, value: String) = Column(horizontalAlignment = Alignment.CenterHorizontally) {

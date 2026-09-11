@@ -42,4 +42,26 @@ class HabitChecklistJsonTest {
         assertEquals("GOAL", exportedAgain.getString("goalType"))
         assertEquals(0, exportedAgain.getJSONArray("todoItems").length())
     }
+
+    @Test
+    fun `round trips streak notes for backup`() {
+        val source = JSONObject()
+            .put("id", "reading")
+            .put("name", "Read")
+            .put("startDate", "2026-08-09")
+            .put("notes", JSONArray().put(
+                JSONObject()
+                    .put("id", "note-1")
+                    .put("date", "2026-08-10")
+                    .put("text", "Finished chapter four")
+                    .put("createdAt", 123L)
+            ))
+
+        val roundTripped = Habit.fromJsonObject(source).toJsonObject()
+        val note = roundTripped.getJSONArray("notes").getJSONObject(0)
+
+        assertEquals("2026-08-10", note.getString("date"))
+        assertEquals("Finished chapter four", note.getString("text"))
+        assertEquals(123L, note.getLong("createdAt"))
+    }
 }

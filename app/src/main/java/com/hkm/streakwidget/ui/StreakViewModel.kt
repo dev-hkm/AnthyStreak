@@ -9,6 +9,7 @@ import com.hkm.streakwidget.domain.StreakCalculator
 import com.hkm.streakwidget.helper.NotificationHelper
 import com.hkm.streakwidget.model.GoalType
 import com.hkm.streakwidget.model.Habit
+import com.hkm.streakwidget.model.StreakNote
 import com.hkm.streakwidget.model.TodoItem
 import com.hkm.streakwidget.model.VisualTheme
 import com.hkm.streakwidget.widget.StreakAppWidgetProvider
@@ -149,6 +150,20 @@ class StreakViewModel(application: Application) : AndroidViewModel(application) 
             if (habit.id == habitId) refreshStreak(habit) else habit
         }
         persist(refreshed, changed.focusedHabitId)
+    }
+
+    fun addNote(text: String, date: String = StreakCalculator.todayString()) {
+        val habit = _focusedHabit.value ?: return
+        val cleanText = text.trim()
+        if (cleanText.isEmpty()) return
+        val updated = habit.copy(notes = habit.notes + StreakNote(date = date, text = cleanText))
+        persist(_habits.value.map { if (it.id == habit.id) updated else it }, habit.id)
+    }
+
+    fun deleteNote(noteId: String) {
+        val habit = _focusedHabit.value ?: return
+        val updated = habit.copy(notes = habit.notes.filterNot { it.id == noteId })
+        persist(_habits.value.map { if (it.id == habit.id) updated else it }, habit.id)
     }
 
     fun toggleTodoToday(todoId: String) {

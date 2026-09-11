@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.2 — 2026-09-11
+
+### Added
+
+- Added per-goal streak notes with date, add, delete, and local persistence support.
+- Included all streak notes in JSON backup and restore.
+
 ## 1.4.1 — 2026-09-11
 
 ### Added

@@ -33,6 +33,28 @@ data class TodoItem(
     }
 }
 
+data class StreakNote(
+    val id: String = UUID.randomUUID().toString(),
+    val date: String,
+    val text: String,
+    val createdAt: Long = System.currentTimeMillis()
+) {
+    fun toJsonObject(): JSONObject = JSONObject()
+        .put("id", id)
+        .put("date", date)
+        .put("text", text)
+        .put("createdAt", createdAt)
+
+    companion object {
+        fun fromJsonObject(json: JSONObject): StreakNote = StreakNote(
+            id = json.optString("id").takeIf(String::isNotBlank) ?: UUID.randomUUID().toString(),
+            date = json.optString("date"),
+            text = json.optString("text").trim(),
+            createdAt = json.optLong("createdAt", 0L)
+        )
+    }
+}
+
 data class Habit(
     val id: String = UUID.randomUUID().toString(),
     val name: String,
@@ -47,6 +69,7 @@ data class Habit(
     val streakCount: Int = 0,
     val completionHistory: List<String> = emptyList(), // List of YYYY-MM-DD
     val debts: List<String> = emptyList(), // List of YYYY-MM-DD
+    val notes: List<StreakNote> = emptyList(),
     val isArchived: Boolean = false,
     val goalType: GoalType = GoalType.GOAL,
     val todoItems: List<TodoItem> = emptyList()
@@ -72,6 +95,10 @@ data class Habit(
         val debtsArray = JSONArray()
         debts.forEach { debtsArray.put(it) }
         json.put("debts", debtsArray)
+
+        val notesArray = JSONArray()
+        notes.forEach { notesArray.put(it.toJsonObject()) }
+        json.put("notes", notesArray)
         
         json.put("isArchived", isArchived)
         json.put("goalType", goalType.name)
@@ -96,6 +123,16 @@ data class Habit(
             if (debtsArray != null) {
                 for (i in 0 until debtsArray.length()) {
                     debtsList.add(debtsArray.getString(i))
+                }
+            }
+
+            val notes = buildList {
+                val notesArray = json.optJSONArray("notes") ?: return@buildList
+                for (index in 0 until notesArray.length()) {
+                    notesArray.optJSONObject(index)
+                        ?.let(StreakNote::fromJsonObject)
+                        ?.takeIf { it.text.isNotBlank() && it.date.isNotBlank() }
+                        ?.let(::add)
                 }
             }
 
@@ -133,6 +170,7 @@ data class Habit(
                 streakCount = json.optInt("streakCount", 0),
                 completionHistory = historyList,
                 debts = debtsList,
+                notes = notes,
                 isArchived = json.optBoolean("isArchived", false),
                 goalType = goalType,
                 todoItems = todoItems
