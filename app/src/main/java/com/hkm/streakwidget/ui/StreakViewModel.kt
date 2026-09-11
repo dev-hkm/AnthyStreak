@@ -207,9 +207,17 @@ class StreakViewModel(application: Application) : AndroidViewModel(application) 
         loadData()
     }
 
-    private fun refreshStreak(habit: Habit) = habit.copy(
-        streakCount = StreakCalculator.calculate(habit.completionHistory, habit.debts)
-    )
+    private fun refreshStreak(habit: Habit): Habit {
+        val reconciledDebts = StreakCalculator.reconcileDebts(
+            startDate = habit.startDate,
+            completedDates = habit.completionHistory,
+            existingDebtDates = habit.debts
+        )
+        return habit.copy(
+            debts = reconciledDebts,
+            streakCount = StreakCalculator.calculate(habit.completionHistory, reconciledDebts)
+        )
+    }
 
     private fun persist(next: List<Habit>, selectedId: String?) {
         _habits.value = next

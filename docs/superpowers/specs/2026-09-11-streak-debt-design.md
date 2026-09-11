@@ -7,7 +7,8 @@ Automatically record missed past goal days as debt while preserving the user's s
 ## Behavior
 
 - A goal never receives debt for today or for a date before its `startDate`.
-- When data is loaded or a goal is checked in, every past date from `startDate` through yesterday is reconciled.
+- A goal only starts receiving automatic debt after its first completed check-in; an untouched goal does not gain a fabricated streak.
+- When data is loaded or a goal is checked in, every past date from the first completed check-in through yesterday is reconciled.
 - A date is added to `debts` only when it is neither completed nor already protected/debted.
 - A check-in records only the selected date as completed and removes that date from `debts` if present.
 - `debts` remain protected dates for streak calculation, so a missed day does not reset the streak.
@@ -35,4 +36,3 @@ Automatically record missed past goal days as debt while preserving the user's s
 3. Check-in and widget check-in keep existing behavior and do not erase older debts.
 4. The main screen communicates the debt state without making the basic streak ritual noisy.
 5. Existing unit tests plus new debt tests pass.
-

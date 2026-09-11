@@ -588,6 +588,10 @@ private fun FocusCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.SemiBold
             )
+            if (habit.debts.isNotEmpty()) {
+                Spacer(Modifier.height(12.dp))
+                DebtBadge(habit.debts.size)
+            }
             if (hasTodos) {
                 Spacer(Modifier.height(24.dp))
                 TodoShortcut(doneTodos, habit.todoItems.size, onOpenTodos)
@@ -622,6 +626,28 @@ private fun FocusCard(
             ) {
                 Text(if (completed) "Undo check-in" else "Check in", fontWeight = FontWeight.ExtraBold)
             }
+        }
+    }
+}
+
+@Composable
+private fun DebtBadge(debtCount: Int) {
+    Surface(
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.78f),
+        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+    ) {
+        Row(
+            Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                if (debtCount == 1) "1 day owed" else "$debtCount days owed",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.ExtraBold
+            )
+            Spacer(Modifier.width(5.dp))
+            Text("· streak protected", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
         }
     }
 }
@@ -700,7 +726,16 @@ private fun WeekCard(habit: Habit) {
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(Modifier.padding(18.dp)) {
-            Text("THIS WEEK", fontSize = 11.sp, letterSpacing = 1.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("THIS WEEK", fontSize = 11.sp, letterSpacing = 1.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (days.any { it in habit.debts }) {
+                    Text("DEBT", fontSize = 10.sp, letterSpacing = 1.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.tertiary)
+                }
+            }
             Spacer(Modifier.height(14.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 days.forEach { day ->
@@ -760,7 +795,7 @@ private fun HistoryDialog(habit: Habit, onDismiss: () -> Unit, onHaptic: () -> U
         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             WeekCard(habit)
             MomentumCard(habit)
-            Text("Each completed day keeps the chain moving. A missed day simply starts the next one.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+            Text("Missed days are recorded as debt, so your current streak stays protected while you get back on track.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
         }
     },
     confirmButton = {

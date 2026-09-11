@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Do not create debt for today or before `Habit.startDate`.
+- Do not create debt for today, before `Habit.startDate`, or before the first completed check-in.
 - Keep completed dates and debt dates disjoint.
 - Preserve streaks through debt dates using the existing protected-date calculation.
 - Do not add a repayment flow, new tab, or unrelated refactor.
@@ -61,7 +61,7 @@ Expected: compilation/test failure because `reconcileDebts` does not exist yet.
 
 - [ ] **Step 3: Implement the minimal date-range helper**
 
-Implement a calendar walk from parsed `startDate` up to but excluding parsed `today`; add valid dates absent from both completed and existing debt sets, return sorted unique ISO dates, and preserve only valid debt dates that are still before today.
+Implement a calendar walk from the first valid completed date (falling back to existing valid debts when history is empty) up to but excluding parsed `today`; add valid dates absent from both completed and existing debt sets, return sorted unique ISO dates, and preserve only valid debt dates that are still before today.
 
 - [ ] **Step 4: Run the focused test and verify it passes**
 
@@ -178,4 +178,3 @@ Run `zipalign` and `apksigner verify --verbose` against the final APK using the 
 - [ ] **Step 5: Deliver through the standing workflow**
 
 Upload the verified APK to Personal R2 `filesend`, verify the public URL and byte length, use current storage.to Init → presigned PUT → Confirm only if R2 fails, then send exactly one ntfy message to `filesend` with the APK name, final link, and concise changelog.
-

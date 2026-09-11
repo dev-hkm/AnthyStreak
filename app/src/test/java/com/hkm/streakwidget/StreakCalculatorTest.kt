@@ -56,4 +56,56 @@ class StreakCalculatorTest {
 
         assertEquals(listOf("2026-08-03", "2026-08-04", "2026-08-05", "2026-08-06", "2026-08-07", "2026-08-08", "2026-08-09"), result)
     }
+
+    @Test
+    fun `reconciles missed past dates without debting today`() {
+        val result = StreakCalculator.reconcileDebts(
+            startDate = "2026-08-07",
+            completedDates = listOf("2026-08-07"),
+            existingDebtDates = emptyList(),
+            today = "2026-08-10"
+        )
+
+        assertEquals(listOf("2026-08-08", "2026-08-09"), result)
+    }
+
+    @Test
+    fun `preserves existing debts and never duplicates completed dates`() {
+        val result = StreakCalculator.reconcileDebts(
+            startDate = "2026-08-07",
+            completedDates = listOf("2026-08-07", "2026-08-09"),
+            existingDebtDates = listOf("2026-08-08", "2026-08-08"),
+            today = "2026-08-10"
+        )
+
+        assertEquals(listOf("2026-08-08"), result)
+    }
+
+    @Test
+    fun `keeps streak continuous across a reconciled missed day`() {
+        val debts = StreakCalculator.reconcileDebts(
+            startDate = "2026-08-07",
+            completedDates = listOf("2026-08-07", "2026-08-09"),
+            existingDebtDates = emptyList(),
+            today = "2026-08-10"
+        )
+
+        assertEquals(3, StreakCalculator.calculate(
+            completedDates = listOf("2026-08-07", "2026-08-09"),
+            protectedDates = debts,
+            today = "2026-08-10"
+        ))
+    }
+
+    @Test
+    fun `does not create debt before the first check in`() {
+        val result = StreakCalculator.reconcileDebts(
+            startDate = "2026-08-07",
+            completedDates = emptyList(),
+            existingDebtDates = emptyList(),
+            today = "2026-08-10"
+        )
+
+        assertEquals(emptyList<String>(), result)
+    }
 }

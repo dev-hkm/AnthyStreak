@@ -6,6 +6,43 @@ import java.util.Locale
 
 /** Pure streak rules, kept independent from Android UI and storage. */
 object StreakCalculator {
+    /**
+     * Fills the gap between a goal's start date and today with protected debt days.
+     * Completed dates always win, and today is deliberately excluded because it is
+     * still actionable rather than missed.
+     */
+    fun reconcileDebts(
+        startDate: String,
+        completedDates: List<String>,
+        existingDebtDates: List<String>,
+        today: String = todayString()
+    ): List<String> {
+        val todayDate = parseDate(today) ?: return emptyList()
+        val completed = completedDates.filter(::isValidDate).toSet()
+        val debts = existingDebtDates
+            .filter(::isValidDate)
+            .filter { date -> parseDate(date)?.before(todayDate) == true }
+            .toMutableSet()
+
+        val firstCompletedDate = completed
+            .mapNotNull(::parseDate)
+            .minByOrNull(Calendar::getTimeInMillis)
+            ?: return (debts - completed).sorted()
+        val configuredStart = parseDate(startDate)
+        val cursor = when {
+            configuredStart == null -> firstCompletedDate
+            firstCompletedDate.before(configuredStart) -> configuredStart
+            else -> firstCompletedDate
+        }
+        while (cursor.before(todayDate)) {
+            val date = format(cursor)
+            if (date !in completed) debts += date
+            cursor.add(Calendar.DAY_OF_YEAR, 1)
+        }
+
+        return (debts - completed).sorted()
+    }
+
     fun calculate(
         completedDates: List<String>,
         protectedDates: List<String>,

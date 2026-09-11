@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.1 — 2026-09-11
+
+### Added
+
+- Missed past goal days are now recorded as debt instead of resetting the current streak.
+- Added a compact debt indicator and weekly debt legend while keeping the core streak ritual unchanged.
+- App and homescreen widget data now reconcile missed days consistently.
+
 ## 1.4.0 — 2026-09-08
 
 ### Added

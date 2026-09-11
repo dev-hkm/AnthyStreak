@@ -80,7 +80,9 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
         if (ids.isEmpty()) return
 
         val repository = HabitRepository(context)
-        val habits = repository.getAllHabits()
+        val storedHabits = repository.getAllHabits()
+        val habits = storedHabits.map(Habit::reconciledForToday)
+        if (habits != storedHabits) repository.saveAllHabits(habits)
         val focusedHabit = WidgetRenderStateFactory.selectHabit(habits, repository.getFocusedHabitId())
 
         ids.forEach { widgetId ->
@@ -205,7 +207,9 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
         if (!repository.isValidWidgetAction(widgetId, habitId, token)) return
 
         val today = StreakCalculator.todayString()
-        val habits = repository.getAllHabits()
+        val storedHabits = repository.getAllHabits()
+        val habits = storedHabits.map(Habit::reconciledForToday)
+        if (habits != storedHabits) repository.saveAllHabits(habits)
         val target = habits.firstOrNull { it.id == habitId && !it.isArchived } ?: return
         if (today in target.completionHistory) {
             updateAllWidgets(context)
@@ -336,6 +340,19 @@ private fun lightenedAccent(accent: Int): Int {
         mix(Color.red(accent)),
         mix(Color.green(accent)),
         mix(Color.blue(accent))
+    )
+}
+
+private fun Habit.reconciledForToday(today: String = StreakCalculator.todayString()): Habit {
+    val reconciledDebts = StreakCalculator.reconcileDebts(
+        startDate = startDate,
+        completedDates = completionHistory,
+        existingDebtDates = debts,
+        today = today
+    )
+    return copy(
+        debts = reconciledDebts,
+        streakCount = StreakCalculator.calculate(completionHistory, reconciledDebts, today)
     )
 }
 
