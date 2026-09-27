@@ -74,6 +74,9 @@ data class Habit(
     val goalType: GoalType = GoalType.GOAL,
     val todoItems: List<TodoItem> = emptyList()
 ) {
+    fun unclaimedMissedDates(today: String = com.hkm.streakwidget.domain.StreakCalculator.todayString()): List<String> =
+        com.hkm.streakwidget.domain.StreakCalculator.getUnclaimedMissedDates(startDate, completionHistory, debts, today)
+
     fun toJsonObject(): JSONObject {
         val json = JSONObject()
         json.put("id", id)

@@ -108,4 +108,45 @@ class StreakCalculatorTest {
 
         assertEquals(emptyList<String>(), result)
     }
+
+    @Test
+    fun `limits auto debts to maximum of two days`() {
+        // Start on Aug 1 (checked in). Today is Aug 5.
+        // Missed Aug 2, Aug 3, Aug 4 (3 days missed).
+        val debts = StreakCalculator.reconcileDebts(
+            startDate = "2026-08-01",
+            completedDates = listOf("2026-08-01"),
+            existingDebtDates = emptyList(),
+            today = "2026-08-05"
+        )
+
+        // Only first 2 days are auto-debts
+        assertEquals(listOf("2026-08-02", "2026-08-03"), debts)
+
+        // Aug 4 is unclaimed and requires user action
+        val unclaimed = StreakCalculator.getUnclaimedMissedDates(
+            startDate = "2026-08-01",
+            completedDates = listOf("2026-08-01"),
+            debts = debts,
+            today = "2026-08-05"
+        )
+        assertEquals(listOf("2026-08-04"), unclaimed)
+
+        // Streak is 0 before claiming Aug 4 because yesterday (Aug 4) was missed and unprotected
+        val streakBeforeClaim = StreakCalculator.calculate(
+            completedDates = listOf("2026-08-01"),
+            protectedDates = debts,
+            today = "2026-08-05"
+        )
+        assertEquals(0, streakBeforeClaim)
+
+        // After user claims Aug 4 as debt, streak is saved and restored!
+        val fullDebts = debts + unclaimed
+        val streakAfterClaim = StreakCalculator.calculate(
+            completedDates = listOf("2026-08-01"),
+            protectedDates = fullDebts,
+            today = "2026-08-05"
+        )
+        assertEquals(4, streakAfterClaim)
+    }
 }

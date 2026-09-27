@@ -70,7 +70,7 @@
                 <TextView
                     style="@style/WidgetText"
                     android:id="@+id/widget_streak_count"
-                    android:layout_width="56dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:includeFontPadding="false"
                     android:gravity="center"
@@ -79,7 +79,7 @@
                     android:autoSizeMaxTextSize="26sp"
                     android:autoSizeStepGranularity="1sp"
                     android:text="@string/widget_preview_count"
-                    android:textColor="#171717"
+                    android:textColor="@color/widget_text_primary"
                     android:textSize="26sp"
                     android:textStyle="bold" />
 
@@ -91,7 +91,7 @@
                     android:layout_marginTop="1dp"
                     android:includeFontPadding="false"
                     android:text="@string/widget_preview_days"
-                    android:textColor="#696969"
+                    android:textColor="@color/widget_text_muted"
                     android:textSize="11sp"
                     android:textStyle="bold" />
             </LinearLayout>
@@ -113,7 +113,7 @@
                 android:includeFontPadding="false"
                 android:letterSpacing="0.12"
                 android:text="@string/widget_preview_today"
-                android:textColor="#696969"
+                android:textColor="@color/widget_text_muted"
                 android:textSize="11sp"
                 android:textStyle="bold" />
 
@@ -127,7 +127,7 @@
                 android:includeFontPadding="false"
                 android:maxLines="2"
                 android:text="@string/widget_preview_goal"
-                android:textColor="#171717"
+                android:textColor="@color/widget_text_primary"
                 android:textSize="17sp"
                 android:textStyle="bold" />
 
@@ -141,7 +141,7 @@
                 android:includeFontPadding="false"
                 android:maxLines="1"
                 android:text="@string/widget_preview_status"
-                android:textColor="#696969"
+                android:textColor="@color/widget_text_muted"
                 android:textSize="11sp"
                 android:textStyle="bold" />
 
@@ -154,7 +154,7 @@
                 android:ellipsize="end"
                 android:includeFontPadding="false"
                 android:maxLines="1"
-                android:textColor="#696969"
+                android:textColor="@color/widget_text_muted"
                 android:textSize="11sp"
                 android:textStyle="bold"
                 android:visibility="gone" />
@@ -170,7 +170,7 @@
                 android:includeFontPadding="false"
                 android:text="@string/widget_preview_check_in"
                 android:textAllCaps="true"
-                android:textColor="#FCFCFC"
+                android:textColor="@color/widget_action_text"
                 android:textSize="11sp"
                 android:textStyle="bold" />
         </LinearLayout>

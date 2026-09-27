@@ -1,12 +1,12 @@
 package com.hkm.streakwidget.widget
 
 enum class WidgetSize(val minWidthDp: Int, val minHeightDp: Int) {
-    TILE(56, 56),
-    STRIP(112, 48),
-    COMPACT(112, 88),
-    SQUARE(112, 168),
-    WIDE(240, 88),
-    HERO(240, 168)
+    TILE(56, 48),
+    STRIP(110, 48),
+    COMPACT(110, 75),
+    WIDE(180, 64),
+    SQUARE(110, 110),
+    HERO(180, 110)
 }
 
 enum class WidgetStyle {
@@ -26,19 +26,19 @@ object WidgetLayoutSpec {
         WidgetSize.TILE,
         WidgetSize.STRIP,
         WidgetSize.COMPACT,
-        WidgetSize.SQUARE,
         WidgetSize.WIDE,
+        WidgetSize.SQUARE,
         WidgetSize.HERO
     )
 
     fun classify(widthDp: Int, heightDp: Int): WidgetSize {
         if (widthDp <= 0 || heightDp <= 0) return WidgetSize.COMPACT
         return when {
-            widthDp >= WidgetSize.HERO.minWidthDp && heightDp >= WidgetSize.HERO.minHeightDp -> WidgetSize.HERO
-            widthDp >= WidgetSize.WIDE.minWidthDp && heightDp >= WidgetSize.WIDE.minHeightDp -> WidgetSize.WIDE
-            widthDp >= WidgetSize.SQUARE.minWidthDp && heightDp >= WidgetSize.SQUARE.minHeightDp -> WidgetSize.SQUARE
-            widthDp >= WidgetSize.COMPACT.minWidthDp && heightDp >= WidgetSize.COMPACT.minHeightDp -> WidgetSize.COMPACT
-            widthDp >= WidgetSize.STRIP.minWidthDp && heightDp >= WidgetSize.STRIP.minHeightDp -> WidgetSize.STRIP
+            widthDp >= 180 && heightDp >= 110 -> WidgetSize.HERO
+            widthDp >= 180 && heightDp >= 64 -> WidgetSize.WIDE
+            widthDp >= 110 && heightDp >= 110 -> WidgetSize.SQUARE
+            widthDp >= 110 && heightDp >= 75 -> WidgetSize.COMPACT
+            widthDp >= 110 && heightDp >= 48 -> WidgetSize.STRIP
             else -> WidgetSize.TILE
         }
     }

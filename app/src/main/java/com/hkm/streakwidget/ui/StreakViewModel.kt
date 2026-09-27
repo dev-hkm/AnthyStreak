@@ -69,6 +69,7 @@ class StreakViewModel(application: Application) : AndroidViewModel(application) 
             ?: fresh.firstOrNull { !it.isArchived }
         _focusedHabit.value?.let { repository.saveFocusedHabitId(it.id) }
         fresh.filter { it.reminderEnabled }.forEach(notifications::scheduleReminder)
+        notifications.scheduleDebtNagging(fresh)
         refreshWidget()
     }
 
@@ -222,6 +223,30 @@ class StreakViewModel(application: Application) : AndroidViewModel(application) 
         loadData()
     }
 
+    fun claimDebt(habitId: String, datesToClaim: List<String>) {
+        val habit = _habits.value.firstOrNull { it.id == habitId } ?: return
+        val updatedDebts = (habit.debts + datesToClaim).distinct().sorted()
+        val updated = habit.copy(
+            debts = updatedDebts,
+            streakCount = StreakCalculator.calculate(habit.completionHistory, updatedDebts)
+        )
+        val next = _habits.value.map { if (it.id == habitId) updated else it }
+        persist(next, habitId)
+    }
+
+    fun payDebt(habitId: String, debtDate: String) {
+        val habit = _habits.value.firstOrNull { it.id == habitId } ?: return
+        val updatedDebts = habit.debts - debtDate
+        val updatedHistory = (habit.completionHistory + debtDate).distinct().sorted()
+        val updated = habit.copy(
+            completionHistory = updatedHistory,
+            debts = updatedDebts,
+            streakCount = StreakCalculator.calculate(updatedHistory, updatedDebts)
+        )
+        val next = _habits.value.map { if (it.id == habitId) updated else it }
+        persist(next, habitId)
+    }
+
     private fun refreshStreak(habit: Habit): Habit {
         val reconciledDebts = StreakCalculator.reconcileDebts(
             startDate = habit.startDate,
@@ -239,6 +264,7 @@ class StreakViewModel(application: Application) : AndroidViewModel(application) 
         repository.saveAllHabits(next)
         repository.saveFocusedHabitId(selectedId)
         _focusedHabit.value = next.firstOrNull { it.id == selectedId && !it.isArchived }
+        notifications.scheduleDebtNagging(next)
         refreshWidget()
     }
 

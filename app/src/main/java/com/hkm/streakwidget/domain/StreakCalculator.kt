@@ -6,8 +6,11 @@ import java.util.Locale
 
 /** Pure streak rules, kept independent from Android UI and storage. */
 object StreakCalculator {
+    const val MAX_AUTO_DEBTS = 2
+
     /**
-     * Fills the gap between a goal's start date and today with protected debt days.
+     * Automatically grants up to [maxAutoDebts] missed days as protected debt days.
+     * Any missed days beyond this limit require manual claiming with user confirmation.
      * Completed dates always win, and today is deliberately excluded because it is
      * still actionable rather than missed.
      */
@@ -15,32 +18,83 @@ object StreakCalculator {
         startDate: String,
         completedDates: List<String>,
         existingDebtDates: List<String>,
-        today: String = todayString()
+        today: String = todayString(),
+        maxAutoDebts: Int = MAX_AUTO_DEBTS
     ): List<String> {
         val todayDate = parseDate(today) ?: return emptyList()
         val completed = completedDates.filter(::isValidDate).toSet()
-        val debts = existingDebtDates
+        val validExisting = existingDebtDates
             .filter(::isValidDate)
             .filter { date -> parseDate(date)?.before(todayDate) == true }
-            .toMutableSet()
+            .filter { it !in completed }
+            .toSet()
+
+        val debts = validExisting.toMutableSet()
 
         val firstCompletedDate = completed
             .mapNotNull(::parseDate)
             .minByOrNull(Calendar::getTimeInMillis)
-            ?: return (debts - completed).sorted()
+            ?: return debts.sorted()
+
         val configuredStart = parseDate(startDate)
         val cursor = when {
             configuredStart == null -> firstCompletedDate
             firstCompletedDate.before(configuredStart) -> configuredStart
             else -> firstCompletedDate
         }
+
+        // Available auto-debt allowance
+        var autoDebtsRemaining = (maxAutoDebts - debts.size).coerceAtLeast(0)
+
         while (cursor.before(todayDate)) {
             val date = format(cursor)
-            if (date !in completed) debts += date
+            if (date !in completed && date !in debts) {
+                if (autoDebtsRemaining > 0) {
+                    debts += date
+                    autoDebtsRemaining -= 1
+                }
+            }
             cursor.add(Calendar.DAY_OF_YEAR, 1)
         }
 
         return (debts - completed).sorted()
+    }
+
+    /**
+     * Finds past missed dates that were not automatically granted debt
+     * and need manual user confirmation to claim and protect the streak.
+     */
+    fun getUnclaimedMissedDates(
+        startDate: String,
+        completedDates: List<String>,
+        debts: List<String>,
+        today: String = todayString()
+    ): List<String> {
+        val todayDate = parseDate(today) ?: return emptyList()
+        val completed = completedDates.filter(::isValidDate).toSet()
+        val currentDebts = debts.filter(::isValidDate).toSet()
+
+        val firstCompletedDate = completed
+            .mapNotNull(::parseDate)
+            .minByOrNull(Calendar::getTimeInMillis)
+            ?: return emptyList()
+
+        val configuredStart = parseDate(startDate)
+        val cursor = when {
+            configuredStart == null -> firstCompletedDate
+            firstCompletedDate.before(configuredStart) -> configuredStart
+            else -> firstCompletedDate
+        }
+
+        val unclaimed = mutableListOf<String>()
+        while (cursor.before(todayDate)) {
+            val date = format(cursor)
+            if (date !in completed && date !in currentDebts) {
+                unclaimed += date
+            }
+            cursor.add(Calendar.DAY_OF_YEAR, 1)
+        }
+        return unclaimed.sorted()
     }
 
     fun calculate(

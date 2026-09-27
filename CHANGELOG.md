@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.5.0 — 2026-09-27
+
+### Added
+- Overhauled Streak Debt System:
+  - Limited automatic debt to a maximum of 2 days (grace period).
+  - Unclaimed missed days beyond grace require active commitment via a manual Claim Debt flow in-app to protect the streak.
+  - Interactive Debt Management: users can view and pay off individual debt days directly in the app.
+  - Relentless Debt Reminders: daily high-urgency notifications at 10:00 and 20:30 nagging and warning users to pay back their streak debts.
+
+### Changed
+- Responsive Widget Architecture:
+  - Re-engineered widget size classification and layout matrix inspired by Tonser's adaptive architecture.
+  - Fixed text clipping, overflow, and cramped padding across all homescreen grid scales (1x1, 2x1, 2x2, 3x1, 4x1, 4x2).
+  - Replaced hardcoded hex colors with unified `@color/widget_...` themes supporting both light and dark system appearances.
+  - Added uniform autoSizeText on streak counters so multi-digit numbers fit without cut-offs.
+
 ## 1.4.2 — 2026-09-11
 
 ### Added

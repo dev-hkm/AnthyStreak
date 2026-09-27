@@ -62,6 +62,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -139,6 +140,8 @@ fun MainScreen(viewModel: StreakViewModel) {
     var showHistory by remember { mutableStateOf(false) }
     var showNotes by remember { mutableStateOf(false) }
     var showTodos by remember { mutableStateOf(false) }
+    var showClaimDebtDialog by remember { mutableStateOf(false) }
+    var showDebtManageDialog by remember { mutableStateOf(false) }
     var ignitionTargetId by remember { mutableStateOf<String?>(null) }
 
     val tapHaptic: () -> Unit = {
@@ -240,6 +243,14 @@ fun MainScreen(viewModel: StreakViewModel) {
                         showTodos = true
                         tapHaptic()
                     },
+                    onClaimDebt = {
+                        showClaimDebtDialog = true
+                        tapHaptic()
+                    },
+                    onManageDebts = {
+                        showDebtManageDialog = true
+                        tapHaptic()
+                    },
                     onCreate = {
                         editorTarget = null
                         showEditor = true
@@ -322,7 +333,46 @@ fun MainScreen(viewModel: StreakViewModel) {
 
     focused?.let { habit ->
         if (showHistory) {
-            HistoryDialog(habit = habit, onDismiss = { showHistory = false }, onHaptic = tapHaptic)
+            HistoryDialog(
+                habit = habit,
+                onDismiss = { showHistory = false },
+                onPayDebt = { date ->
+                    viewModel.payDebt(habit.id, date)
+                    confirmHaptic()
+                    scope.launch { snackbar.showSnackbar("Đã trả nợ ngày $date thành công!") }
+                },
+                onHaptic = tapHaptic
+            )
+        }
+        if (showClaimDebtDialog) {
+            val unclaimed = habit.unclaimedMissedDates()
+            if (unclaimed.isNotEmpty()) {
+                ClaimDebtDialog(
+                    habit = habit,
+                    unclaimedDates = unclaimed,
+                    onDismiss = { showClaimDebtDialog = false },
+                    onConfirm = { dates ->
+                        viewModel.claimDebt(habit.id, dates)
+                        confirmHaptic()
+                        scope.launch { snackbar.showSnackbar("Đã cứu streak thành công! Hãy nỗ lực trả nợ nhé.") }
+                    },
+                    onHaptic = tapHaptic
+                )
+            } else {
+                showClaimDebtDialog = false
+            }
+        }
+        if (showDebtManageDialog) {
+            DebtManagementDialog(
+                habit = habit,
+                onDismiss = { showDebtManageDialog = false },
+                onPayDebt = { date ->
+                    viewModel.payDebt(habit.id, date)
+                    confirmHaptic()
+                    scope.launch { snackbar.showSnackbar("Đã trả nợ ngày $date thành công!") }
+                },
+                onHaptic = tapHaptic
+            )
         }
         if (showNotes) {
             NotesDialog(
@@ -457,6 +507,8 @@ private fun TodayScreen(
     onHistory: () -> Unit,
     onNotes: () -> Unit,
     onOpenTodos: () -> Unit,
+    onClaimDebt: () -> Unit,
+    onManageDebts: () -> Unit,
     onCreate: () -> Unit,
     onSettings: () -> Unit
 ) {
@@ -485,7 +537,9 @@ private fun TodayScreen(
                     onToggleToday = onToggleToday,
                     onHistory = onHistory,
                     onNotes = onNotes,
-                    onOpenTodos = onOpenTodos
+                    onOpenTodos = onOpenTodos,
+                    onClaimDebt = onClaimDebt,
+                    onManageDebts = onManageDebts
                 )
             }
         }
@@ -544,7 +598,9 @@ private fun FocusCard(
     onToggleToday: (String) -> Unit,
     onHistory: () -> Unit,
     onNotes: () -> Unit,
-    onOpenTodos: () -> Unit
+    onOpenTodos: () -> Unit,
+    onClaimDebt: () -> Unit,
+    onManageDebts: () -> Unit
 ) {
     val today = StreakCalculator.todayString()
     val completed = today in habit.completionHistory
@@ -607,9 +663,32 @@ private fun FocusCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.SemiBold
             )
+            val unclaimed = habit.unclaimedMissedDates(today)
+            if (unclaimed.isNotEmpty()) {
+                Spacer(Modifier.height(10.dp))
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.92f),
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.clickable { onClaimDebt() }
+                ) {
+                    Row(
+                        Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("🚨", fontSize = 14.sp)
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            "Đứt streak! Xin nợ & cam kết cứu (${unclaimed.size} ngày)",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
             if (habit.debts.isNotEmpty()) {
-                Spacer(Modifier.height(12.dp))
-                DebtBadge(habit.debts.size)
+                Spacer(Modifier.height(10.dp))
+                DebtBadge(habit.debts.size, onClick = onManageDebts)
             }
             if (hasTodos) {
                 Spacer(Modifier.height(24.dp))
@@ -659,11 +738,12 @@ private fun FocusCard(
 }
 
 @Composable
-private fun DebtBadge(debtCount: Int) {
+private fun DebtBadge(debtCount: Int, onClick: () -> Unit = {}) {
     Surface(
         shape = RoundedCornerShape(18.dp),
         color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.78f),
-        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+        modifier = Modifier.clickable { onClick() }
     ) {
         Row(
             Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
@@ -675,9 +755,154 @@ private fun DebtBadge(debtCount: Int) {
                 fontWeight = FontWeight.ExtraBold
             )
             Spacer(Modifier.width(5.dp))
-            Text("· streak protected", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+            Text("· tap to manage", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
         }
     }
+}
+
+@Composable
+private fun ClaimDebtDialog(
+    habit: Habit,
+    unclaimedDates: List<String>,
+    onDismiss: () -> Unit,
+    onConfirm: (List<String>) -> Unit,
+    onHaptic: () -> Unit
+) {
+    var committed by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("🚨", fontSize = 20.sp)
+                Spacer(Modifier.width(8.dp))
+                Text("Cam Kết Xin Nợ Streak", fontWeight = FontWeight.ExtraBold)
+            }
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    "Bạn đã lỡ ${unclaimedDates.size} ngày check-in: ${unclaimedDates.joinToString(", ")} và đã hết 2 lượt nợ tự động miễn phí.",
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    "Để chuỗi streak không bị reset về 0, bạn có thể xin nợ có cam kết. Sau khi nhận nợ, ngọn lửa streak sẽ được duy trì, nhưng hệ thống sẽ gửi thông báo hối thúc và hăm dọa hằng ngày cho đến khi bạn trả xong nợ!",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 13.sp
+                )
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    modifier = Modifier.fillMaxWidth().clickable { committed = !committed }
+                ) {
+                    Row(
+                        Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = committed,
+                            onCheckedChange = { committed = it }
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            "Tôi cam kết sẽ trả nợ và không từ bỏ!",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onHaptic()
+                    onConfirm(unclaimedDates)
+                    onDismiss()
+                },
+                enabled = committed
+            ) {
+                Text("Xác nhận & Cứu Streak")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Để sau")
+            }
+        }
+    )
+}
+
+@Composable
+private fun DebtManagementDialog(
+    habit: Habit,
+    onDismiss: () -> Unit,
+    onPayDebt: (String) -> Unit,
+    onHaptic: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("🔥", fontSize = 20.sp)
+                Spacer(Modifier.width(8.dp))
+                Text("Quản lý nợ Streak", fontWeight = FontWeight.ExtraBold)
+            }
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    "Bạn đang nợ ${habit.debts.size} ngày. Mỗi ngày nợ sẽ bảo vệ chuỗi streak, nhưng ứng dụng sẽ gửi thông báo hối thúc hằng ngày!",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 13.sp
+                )
+                Spacer(Modifier.height(4.dp))
+                Column(
+                    Modifier
+                        .heightIn(max = 260.dp)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    habit.debts.forEach { debtDate ->
+                        Surface(
+                            shape = RoundedCornerShape(14.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(debtDate, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                    Text("Nợ chưa trả", color = MaterialTheme.colorScheme.tertiary, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                                }
+                                Button(
+                                    onClick = {
+                                        onHaptic()
+                                        onPayDebt(debtDate)
+                                    },
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                                    modifier = Modifier.height(34.dp)
+                                ) {
+                                    Text("Trả nợ", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Đóng")
+            }
+        }
+    )
 }
 
 /**
@@ -816,14 +1041,54 @@ private fun MomentumCard(habit: Habit) {
 }
 
 @Composable
-private fun HistoryDialog(habit: Habit, onDismiss: () -> Unit, onHaptic: () -> Unit) = AlertDialog(
+private fun HistoryDialog(
+    habit: Habit,
+    onDismiss: () -> Unit,
+    onPayDebt: (String) -> Unit = {},
+    onHaptic: () -> Unit
+) = AlertDialog(
     onDismissRequest = onDismiss,
     title = { Text("Your progress", fontWeight = FontWeight.ExtraBold) },
     text = {
-        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Column(
+            Modifier.verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
             WeekCard(habit)
             MomentumCard(habit)
-            Text("Missed days are recorded as debt, so your current streak stays protected while you get back on track.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+            if (habit.debts.isNotEmpty()) {
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Món nợ Streak đang kích hoạt", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        habit.debts.forEach { debtDate ->
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(debtDate, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                TextButton(
+                                    onClick = {
+                                        onHaptic()
+                                        onPayDebt(debtDate)
+                                    }
+                                ) {
+                                    Text("Trả nợ")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Text(
+                "Tối đa 2 ngày quên check-in được tự động nợ để bảo vệ streak. Các ngày tiếp theo cần xin nợ và cam kết. Hãy trả nợ sớm để giữ chuỗi streak bền vững.",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 12.sp
+            )
         }
     },
     confirmButton = {
