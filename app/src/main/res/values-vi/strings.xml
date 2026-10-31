@@ -19,8 +19,7 @@
     <string name="cd_remove_task">Xóa việc</string>
     <string name="cd_delete_note">Xóa ghi chú</string>
     <string name="cd_open_tasks">Mở việc hôm nay</string>
-    <string name="cd_dock_rescue">Mở ngày cứu chuỗi</string>
-    <string name="cd_dock_notes">Mở ghi chú chuỗi</string>
+    <string name="cd_more_options">Mở tùy chọn mục tiêu</string>
     <string name="cd_color">Màu %1$s</string>
     <string name="cd_theme">Giao diện %1$s</string>
     <string name="cd_format">Định dạng %1$s</string>
@@ -60,6 +59,17 @@
     <string name="today_resume_today">Tiếp tục hôm nay</string>
     <string name="today_paused_title">Đang tạm nghỉ</string>
     <string name="today_next_milestone">Mốc tiếp theo: %1$d ngày</string>
+    <string name="sheet_tasks">Việc hôm nay</string>
+    <string name="sheet_tasks_progress">%1$d trên %2$d</string>
+    <string name="sheet_notes_empty">Chưa có</string>
+    <plurals name="sheet_notes_count">
+        <item quantity="one">%1$d ghi chú</item>
+        <item quantity="other">%1$d ghi chú</item>
+    </plurals>
+    <plurals name="sheet_rescue_days">
+        <item quantity="one">%1$d ngày</item>
+        <item quantity="other">%1$d ngày</item>
+    </plurals>
 
     <!-- Goal row -->
     <string name="goal_status_archived">Đã lưu trữ</string>

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.2 — 2026-10-31
+
+### Changed
+- Replaced the crowded control dock with one quiet overflow button: the Today screen is back to just the goal, the flame, the streak, and the check-in button.
+- The new menu opens as a bottom sheet with pause or resume, rescue days, today’s tasks, notes, insights, and settings, each showing a short status.
+- Removed the numeric badges entirely; a small dot on the overflow button appears only when a rescue day needs an answer.
+
 ## 1.6.1 — 2026-10-31
 
 ### Changed

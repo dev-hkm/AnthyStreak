@@ -21,8 +21,7 @@
     <string name="cd_remove_task">Remove task</string>
     <string name="cd_delete_note">Delete note</string>
     <string name="cd_open_tasks">Open daily tasks</string>
-    <string name="cd_dock_rescue">Open streak rescue days</string>
-    <string name="cd_dock_notes">Open streak notes</string>
+    <string name="cd_more_options">Open goal options</string>
     <string name="cd_color">%1$s color</string>
     <string name="cd_theme">%1$s theme</string>
     <string name="cd_format">%1$s format</string>
@@ -62,6 +61,17 @@
     <string name="today_resume_today">Resume today</string>
     <string name="today_paused_title">Planned break</string>
     <string name="today_next_milestone">Next milestone: %1$d days</string>
+    <string name="sheet_tasks">Today’s tasks</string>
+    <string name="sheet_tasks_progress">%1$d of %2$d</string>
+    <string name="sheet_notes_empty">None yet</string>
+    <plurals name="sheet_notes_count">
+        <item quantity="one">%1$d note</item>
+        <item quantity="other">%1$d notes</item>
+    </plurals>
+    <plurals name="sheet_rescue_days">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
 
     <!-- Goal row -->
     <string name="goal_status_archived">Archived</string>
