@@ -81,6 +81,23 @@ class WidgetRenderStateTest {
     }
 
     @Test
+    fun `paused goal keeps the earned streak and offers a calm open action`() {
+        val habit = habit(
+            completionHistory = listOf("2026-08-08", "2026-08-07"),
+            pausedDates = listOf(today)
+        )
+
+        val state = WidgetRenderStateFactory.create(habit, today)
+
+        assertEquals(WidgetVisualState.PAUSED, state.visualState)
+        assertEquals(2, state.streak)
+        assertEquals("ON BREAK", state.status)
+        assertEquals("OPEN", state.actionLabel)
+        assertEquals(WidgetPrimaryAction.OPEN_APP, state.primaryAction)
+        assertFalse(state.isCompleted)
+    }
+
+    @Test
     fun `invalid accent falls back to the approved flame orange`() {
         val state = WidgetRenderStateFactory.create(habit(colorHex = "definitely-not-a-color"), today)
 
@@ -133,7 +150,8 @@ class WidgetRenderStateTest {
         completionHistory: List<String> = emptyList(),
         todoItems: List<TodoItem> = emptyList(),
         goalType: GoalType = if (todoItems.isEmpty()) GoalType.GOAL else GoalType.CHECKLIST,
-        isArchived: Boolean = false
+        isArchived: Boolean = false,
+        pausedDates: List<String> = emptyList()
     ) = Habit(
         id = id,
         name = name,
@@ -142,6 +160,7 @@ class WidgetRenderStateTest {
         completionHistory = completionHistory,
         goalType = goalType,
         todoItems = todoItems,
-        isArchived = isArchived
+        isArchived = isArchived,
+        pausedDates = pausedDates
     )
 }

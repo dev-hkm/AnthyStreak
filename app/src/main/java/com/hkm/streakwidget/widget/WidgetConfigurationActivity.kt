@@ -33,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,18 +42,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.hkm.streakwidget.MainActivity
+import com.hkm.streakwidget.R
 import com.hkm.streakwidget.data.HabitRepository
+import com.hkm.streakwidget.data.localizedFor
 import com.hkm.streakwidget.domain.StreakCalculator
 import com.hkm.streakwidget.model.GoalType
 import com.hkm.streakwidget.model.Habit
 import com.hkm.streakwidget.ui.components.CustomFlame
 import com.hkm.streakwidget.ui.components.FlameState
-import com.hkm.streakwidget.ui.components.LucideIcons
+import com.hkm.streakwidget.ui.theme.AppIcons
 import com.hkm.streakwidget.ui.theme.StreakWidgetTheme
 
 /** Appears only while a user adds or reconfigures a home-screen widget. */
@@ -78,17 +86,26 @@ class WidgetConfigurationActivity : ComponentActivity() {
             val activeHabits = remember { repository.getAllHabits().filterNot(Habit::isArchived) }
             val configuredHabitId = remember { repository.getWidgetHabitId(appWidgetId) }
             val configuredStyle = remember { repository.getWidgetStyle(appWidgetId) }
+            val language = remember { repository.getAppLanguage() }
+            val baseContext = LocalContext.current
+            val localizedContext = remember(language, baseContext) { baseContext.localizedFor(language) }
             StreakWidgetTheme(mode = repository.getThemeMode()) {
-                WidgetGoalPicker(
-                    habits = activeHabits,
-                    initiallySelectedHabitId = configuredHabitId,
-                    initiallySelectedStyle = configuredStyle,
-                    onDismiss = ::finish,
-                    onComplete = ::completeConfiguration,
-                    onOpenApp = {
-                        startActivity(Intent(this, MainActivity::class.java))
-                    }
-                )
+                CompositionLocalProvider(
+                    LocalContext provides localizedContext,
+                    LocalConfiguration provides localizedContext.resources.configuration,
+                    LocalResources provides localizedContext.resources
+                ) {
+                    WidgetGoalPicker(
+                        habits = activeHabits,
+                        initiallySelectedHabitId = configuredHabitId,
+                        initiallySelectedStyle = configuredStyle,
+                        onDismiss = ::finish,
+                        onComplete = ::completeConfiguration,
+                        onOpenApp = {
+                            startActivity(Intent(this, MainActivity::class.java))
+                        }
+                    )
+                }
             }
         }
     }
@@ -134,9 +151,9 @@ private fun WidgetGoalPicker(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(Modifier.weight(1f)) {
-                Text("WIDGET", color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.ExtraBold, fontSize = 11.sp, letterSpacing = 1.4.sp)
+                Text(stringResource(R.string.config_eyebrow), color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.ExtraBold, fontSize = 11.sp, letterSpacing = 1.4.sp)
                 Text(
-                    if (choosingStyle) "Choose its character" else "Choose a daily goal",
+                    stringResource(if (choosingStyle) R.string.config_title_style else R.string.config_title_goal),
                     color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 25.sp
@@ -148,7 +165,7 @@ private fun WidgetGoalPicker(
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
             ) {
                 IconButton(onClick = onDismiss, modifier = Modifier.size(44.dp)) {
-                    Icon(LucideIcons.X, contentDescription = "Cancel", tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(20.dp))
+                    Icon(AppIcons.X, contentDescription = stringResource(R.string.common_cancel), tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(20.dp))
                 }
             }
         }
@@ -161,23 +178,21 @@ private fun WidgetGoalPicker(
             ) {
                 CustomFlame(FlameState.IDLE, modifier = Modifier.size(96.dp))
                 Spacer(Modifier.height(12.dp))
-                Text("Create one promise first.", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp)
+                Text(stringResource(R.string.config_empty_title), color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp)
                 Spacer(Modifier.height(8.dp))
-                Text("Your widget will be ready as soon as a goal exists.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+                Text(stringResource(R.string.config_empty_body), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
                 Spacer(Modifier.height(20.dp))
                 Button(onClick = onOpenApp, shape = RoundedCornerShape(18.dp)) {
-                    Icon(LucideIcons.Plus, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Icon(AppIcons.Plus, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Open Widget", fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(R.string.config_open_app), fontWeight = FontWeight.ExtraBold)
                 }
             }
         } else if (!choosingStyle) {
             Text(
-                if (initiallySelectedHabitId == null) {
-                    "The widget follows this goal directly. You can add another widget for another goal."
-                } else {
-                    "Reconfigure this widget without affecting your other placements."
-                },
+                stringResource(
+                    if (initiallySelectedHabitId == null) R.string.config_goal_hint_new else R.string.config_goal_hint_existing
+                ),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 13.sp,
                 modifier = Modifier.padding(top = 18.dp, bottom = 14.dp)
@@ -200,7 +215,7 @@ private fun WidgetGoalPicker(
         } else {
             val habit = selectedHabit ?: return@Column
             Text(
-                "${habit.name} · your saved style stays intact when the launcher resizes the widget.",
+                stringResource(R.string.config_style_hint, habit.name),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 13.sp,
                 modifier = Modifier.padding(top = 18.dp, bottom = 14.dp)
@@ -231,14 +246,17 @@ private fun WidgetGoalPicker(
                         contentColor = MaterialTheme.colorScheme.onSurface
                     )
                 ) {
-                    Text("Back", fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(R.string.config_back), fontWeight = FontWeight.ExtraBold)
                 }
                 Button(
                     onClick = { onComplete(habit, selectedStyle) },
                     modifier = Modifier.weight(0.58f),
                     shape = RoundedCornerShape(18.dp)
                 ) {
-                    Text(if (initiallySelectedHabitId == null) "Add widget" else "Update widget", fontWeight = FontWeight.ExtraBold)
+                    Text(
+                        stringResource(if (initiallySelectedHabitId == null) R.string.config_add else R.string.config_update),
+                        fontWeight = FontWeight.ExtraBold
+                    )
                 }
             }
         }
@@ -276,7 +294,7 @@ private fun WidgetGoalRow(habit: Habit, selected: Boolean, onClick: () -> Unit) 
             Column(Modifier.weight(1f)) {
                 Text(habit.name, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(
-                    if (completed) "Today secured" else "Ready for today",
+                    stringResource(if (completed) R.string.config_completed else R.string.config_ready),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 12.sp
                 )
@@ -284,10 +302,20 @@ private fun WidgetGoalRow(habit: Habit, selected: Boolean, onClick: () -> Unit) 
             Spacer(Modifier.width(10.dp))
             Column(horizontalAlignment = Alignment.End) {
                 Text(streak.toString(), color = MaterialTheme.colorScheme.onSurface, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
-                Text(if (streak == 1) "DAY" else "DAYS", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold)
+                Text(
+                    pluralStringResource(R.plurals.widget_days, streak, streak),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.ExtraBold
+                )
             }
             Spacer(Modifier.width(6.dp))
-            Icon(LucideIcons.ChevronRight, contentDescription = "Use ${habit.name} in widget", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+            Icon(
+                AppIcons.ChevronRight,
+                contentDescription = stringResource(R.string.config_use_goal, habit.name),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(18.dp)
+            )
         }
     }
 }
@@ -301,22 +329,26 @@ private fun WidgetStylePreview(
 ) {
     val today = StreakCalculator.todayString()
     val streak = StreakCalculator.calculate(habit.completionHistory, habit.debts, today)
-    val title = when (style) {
-        WidgetStyle.EMBER -> "Ember"
-        WidgetStyle.FOCUS -> "Focus"
-        WidgetStyle.CHECKLIST -> "Checklist"
-        WidgetStyle.POSTER -> "Poster"
-    }
-    val description = when (style) {
-        WidgetStyle.EMBER -> "Flame and streak, distilled for every size."
-        WidgetStyle.FOCUS -> "Goal, state and direct daily check-in."
-        WidgetStyle.CHECKLIST -> if (habit.goalType == GoalType.CHECKLIST) {
-            "Daily task progress gets the strongest supporting line."
-        } else {
-            "Falls back to Focus until this goal has a checklist."
+    val title = stringResource(
+        when (style) {
+            WidgetStyle.EMBER -> R.string.config_style_ember
+            WidgetStyle.FOCUS -> R.string.config_style_focus
+            WidgetStyle.CHECKLIST -> R.string.config_style_checklist
+            WidgetStyle.POSTER -> R.string.config_style_poster
         }
-        WidgetStyle.POSTER -> "Oversized flame and count on Square and Hero sizes."
-    }
+    )
+    val description = stringResource(
+        when (style) {
+            WidgetStyle.EMBER -> R.string.config_style_ember_desc
+            WidgetStyle.FOCUS -> R.string.config_style_focus_desc
+            WidgetStyle.CHECKLIST -> if (habit.goalType == GoalType.CHECKLIST) {
+                R.string.config_style_checklist_desc
+            } else {
+                R.string.config_style_checklist_fallback
+            }
+            WidgetStyle.POSTER -> R.string.config_style_poster_desc
+        }
+    )
 
     Surface(
         modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).clickable(onClick = onClick),
@@ -355,7 +387,7 @@ private fun WidgetStylePreview(
                 Text(description, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
             }
             if (selected) {
-                Text("SELECTED", color = MaterialTheme.colorScheme.onSurface, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(R.string.config_selected), color = MaterialTheme.colorScheme.onSurface, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold)
             }
         }
     }

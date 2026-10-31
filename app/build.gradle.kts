@@ -15,8 +15,8 @@ android {
         applicationId = "com.hkm.streakwidget"
         minSdk = 24
         targetSdk = 36
-        versionCode = 11
-        versionName = "1.5.0"
+        versionCode = 12
+        versionName = "1.6.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -46,6 +46,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation("com.adamglin:phosphor-icon:1.0.0")
     testImplementation(libs.junit)
     testImplementation("org.json:json:20260719")
     androidTestImplementation(platform(libs.androidx.compose.bom))

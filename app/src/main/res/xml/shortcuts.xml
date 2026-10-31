@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_today"
+        android:shortcutId="today"
+        android:shortcutLongLabel="@string/shortcut_today_long"
+        android:shortcutShortLabel="@string/shortcut_today_short">
+        <intent
+            android:action="com.hkm.streakwidget.shortcut.TODAY"
+            android:targetClass="com.hkm.streakwidget.MainActivity"
+            android:targetPackage="com.hkm.streakwidget" />
+    </shortcut>
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_insights"
+        android:shortcutId="insights"
+        android:shortcutLongLabel="@string/shortcut_insights_long"
+        android:shortcutShortLabel="@string/shortcut_insights_short">
+        <intent
+            android:action="com.hkm.streakwidget.shortcut.INSIGHTS"
+            android:targetClass="com.hkm.streakwidget.MainActivity"
+            android:targetPackage="com.hkm.streakwidget" />
+    </shortcut>
+</shortcuts>

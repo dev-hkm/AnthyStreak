@@ -71,6 +71,23 @@ class GoalRowPresentationTest {
     }
 
     @Test
+    fun `paused goal row uses calm pause copy without completing the day`() {
+        val presentation = goalRowPresentation(
+            Habit(
+                name = "Read",
+                startDate = today,
+                streakCount = 6,
+                pausedDates = listOf(today)
+            ),
+            today
+        )
+
+        assertEquals("Paused today", presentation.statusText)
+        assertEquals("6 days", presentation.streakText)
+        assertFalse(presentation.isCompleted)
+    }
+
+    @Test
     fun `archived row tap maps to manage and never restore`() {
         val presentation = goalRowPresentation(
             Habit(name = "Archived goal", startDate = today, isArchived = true),

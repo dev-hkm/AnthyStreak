@@ -21,9 +21,24 @@ internal data class WidgetRenderState(
     val isCompleted: Boolean
 )
 
-internal enum class WidgetVisualState { EMPTY, READY, COMPLETED }
+internal enum class WidgetVisualState { EMPTY, READY, COMPLETED, PAUSED }
 
 internal enum class WidgetPrimaryAction { OPEN_APP, CHECK_IN }
+
+/** Localized copy injected once per update, so the pure factory stays testable. */
+internal data class WidgetLabels(
+    val emptyTitle: String = "Start your first goal",
+    val emptyStatus: String = "ONE PROMISE AT A TIME",
+    val createGoal: String = "CREATE GOAL",
+    val ready: String = "READY TODAY",
+    val secured: String = "TODAY SECURED",
+    val checkIn: String = "CHECK IN",
+    val paused: String = "ON BREAK",
+    val open: String = "OPEN",
+    val day: String = "DAY",
+    val days: String = "DAYS",
+    val taskProgress: String = "%1\$d OF %2\$d TASKS"
+)
 
 internal fun Habit.isWidgetChecklistEligible(): Boolean =
     goalType == GoalType.CHECKLIST && todoItems.isNotEmpty()
@@ -59,16 +74,20 @@ internal object WidgetRenderStateFactory {
         habits.firstOrNull { it.id == focusedHabitId && !it.isArchived }
             ?: habits.firstOrNull { !it.isArchived }
 
-    fun create(habit: Habit?, today: String = StreakCalculator.todayString()): WidgetRenderState {
+    fun create(
+        habit: Habit?,
+        today: String = StreakCalculator.todayString(),
+        labels: WidgetLabels = WidgetLabels()
+    ): WidgetRenderState {
         if (habit == null) {
             return WidgetRenderState(
                 visualState = WidgetVisualState.EMPTY,
-                title = "Start your first goal",
+                title = labels.emptyTitle,
                 streak = 0,
-                streakLabel = "DAYS",
-                status = "ONE PROMISE AT A TIME",
+                streakLabel = labels.days,
+                status = labels.emptyStatus,
                 taskProgress = null,
-                actionLabel = "CREATE GOAL",
+                actionLabel = labels.createGoal,
                 primaryAction = WidgetPrimaryAction.OPEN_APP,
                 accentHex = "#777777",
                 isCompleted = false
@@ -76,26 +95,40 @@ internal object WidgetRenderStateFactory {
         }
 
         val completed = today in habit.completionHistory
+        val paused = habit.isPausedOn(today) && !completed
         val taskProgress = habit.takeIf { it.isWidgetChecklistEligible() }
             ?.let { checklist ->
                 val completedTasks = checklist.todoItems.count { it.isCompletedOn(today) }
-                "$completedTasks OF ${checklist.todoItems.size} TASKS"
+                String.format(labels.taskProgress, completedTasks, checklist.todoItems.size)
             }
 
-        val streak = StreakCalculator.calculate(habit.completionHistory, habit.debts, today)
+        val streak = StreakCalculator.calculate(
+            habit.completionHistory,
+            habit.debts,
+            today,
+            habit.pausedDates
+        )
         return WidgetRenderState(
-            visualState = if (completed) WidgetVisualState.COMPLETED else WidgetVisualState.READY,
+            visualState = when {
+                completed -> WidgetVisualState.COMPLETED
+                paused -> WidgetVisualState.PAUSED
+                else -> WidgetVisualState.READY
+            },
             title = habit.name,
             streak = streak,
-            streakLabel = if (streak == 1) {
-                "DAY"
-            } else {
-                "DAYS"
+            streakLabel = if (streak == 1) labels.day else labels.days,
+            status = when {
+                completed -> labels.secured
+                paused -> labels.paused
+                else -> labels.ready
             },
-            status = if (completed) "TODAY SECURED" else "READY TODAY",
             taskProgress = taskProgress,
-            actionLabel = if (completed) "TODAY SECURED" else "CHECK IN",
-            primaryAction = if (completed) WidgetPrimaryAction.OPEN_APP else WidgetPrimaryAction.CHECK_IN,
+            actionLabel = when {
+                completed -> labels.secured
+                paused -> labels.open
+                else -> labels.checkIn
+            },
+            primaryAction = if (completed || paused) WidgetPrimaryAction.OPEN_APP else WidgetPrimaryAction.CHECK_IN,
             accentHex = normalizeAccent(habit.colorHex),
             isCompleted = completed
         )

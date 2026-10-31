@@ -45,7 +45,7 @@ object WidgetLayoutSpec {
 }
 
 fun resolvedStyle(size: WidgetSize, selected: WidgetStyle, hasChecklist: Boolean): WidgetStyle = when {
-    size == WidgetSize.TILE -> WidgetStyle.EMBER
+    size == WidgetSize.TILE || size == WidgetSize.STRIP -> WidgetStyle.EMBER
     selected == WidgetStyle.CHECKLIST && !hasChecklist -> WidgetStyle.FOCUS
     else -> selected
 }

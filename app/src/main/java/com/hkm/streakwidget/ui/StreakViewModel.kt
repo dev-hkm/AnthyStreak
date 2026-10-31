@@ -1,10 +1,14 @@
 package com.hkm.streakwidget.ui
 
 import android.app.Application
+import android.content.Context
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.hkm.streakwidget.data.AppLanguage
 import com.hkm.streakwidget.data.HabitRepository
+import com.hkm.streakwidget.data.localizedFor
+import com.hkm.streakwidget.domain.MilestoneRules
 import com.hkm.streakwidget.domain.StreakCalculator
 import com.hkm.streakwidget.helper.NotificationHelper
 import com.hkm.streakwidget.model.GoalType
@@ -55,8 +59,17 @@ class StreakViewModel(application: Application) : AndroidViewModel(application) 
     val focusedHabit: StateFlow<Habit?> = _focusedHabit.asStateFlow()
     private var requestedFocusId: String? = null
 
+    private val _milestone = MutableStateFlow<MilestoneEvent?>(null)
+    val milestone: StateFlow<MilestoneEvent?> = _milestone.asStateFlow()
+    private val _pendingScreen = MutableStateFlow<AppScreen?>(null)
+    val pendingScreen: StateFlow<AppScreen?> = _pendingScreen.asStateFlow()
+
     val themeMode = mutableStateOf(repository.getThemeMode())
     val hapticEnabled = mutableStateOf(repository.isHapticEnabled())
+    val appLanguage = mutableStateOf(repository.getAppLanguage())
+    val reduceMotion = mutableStateOf(repository.isReduceMotionEnabled())
+    val remindersEnabled = mutableStateOf(repository.areHabitRemindersEnabled())
+    val rescueRemindersEnabled = mutableStateOf(repository.areRescueRemindersEnabled())
 
     init { loadData() }
 
@@ -142,6 +155,13 @@ class StreakViewModel(application: Application) : AndroidViewModel(application) 
 
     fun toggleToday(habitId: String) {
         val today = StreakCalculator.todayString()
+        val before = _habits.value.firstOrNull { it.id == habitId } ?: return
+        val previousStreak = StreakCalculator.calculate(
+            before.completionHistory,
+            before.debts,
+            today,
+            before.pausedDates
+        )
         val changed = GoalCheckInState(
             habits = _habits.value,
             focusedHabitId = _focusedHabit.value?.id
@@ -151,6 +171,48 @@ class StreakViewModel(application: Application) : AndroidViewModel(application) 
             if (habit.id == habitId) refreshStreak(habit) else habit
         }
         persist(refreshed, changed.focusedHabitId)
+        val after = refreshed.firstOrNull { it.id == habitId } ?: return
+        MilestoneRules.crossed(previousStreak, after.streakCount)?.let { days ->
+            _milestone.value = MilestoneEvent(habitId = after.id, habitName = after.name, days = days)
+        }
+    }
+
+    fun consumeMilestone() {
+        _milestone.value = null
+    }
+
+    fun togglePauseToday() {
+        val habit = _focusedHabit.value ?: return
+        val today = StreakCalculator.todayString()
+        val pausedDates = if (habit.isPausedOn(today)) {
+            habit.pausedDates - today
+        } else {
+            (habit.pausedDates + today).distinct().sorted()
+        }
+        val updated = refreshStreak(habit.copy(pausedDates = pausedDates, debts = habit.debts - today))
+        persist(_habits.value.map { if (it.id == habit.id) updated else it }, habit.id)
+    }
+
+    /** One-tap check-in used by the Quick Settings tile; never toggles off. */
+    fun checkInFocusedToday(): Boolean {
+        val today = StreakCalculator.todayString()
+        val habit = _focusedHabit.value
+            ?: _habits.value.firstOrNull { !it.isArchived }
+            ?: return false
+        if (habit.isPausedOn(today)) return false
+        if (today in habit.completionHistory) return true
+        toggleToday(habit.id)
+        return true
+    }
+
+    fun localizedContext(): Context = getApplication<Application>().localizedFor(appLanguage.value)
+
+    fun requestScreen(screen: AppScreen) {
+        _pendingScreen.value = screen
+    }
+
+    fun consumeRequestedScreen() {
+        _pendingScreen.value = null
     }
 
     fun addNote(text: String, date: String = StreakCalculator.todayString()) {
@@ -208,19 +270,60 @@ class StreakViewModel(application: Application) : AndroidViewModel(application) 
         repository.setHapticEnabled(enabled)
     }
 
+    fun updateAppLanguage(language: AppLanguage) {
+        appLanguage.value = language
+        repository.setAppLanguage(language)
+        rescheduleNotifications()
+        refreshWidget()
+    }
+
+    fun updateReduceMotion(enabled: Boolean) {
+        reduceMotion.value = enabled
+        repository.setReduceMotionEnabled(enabled)
+    }
+
+    fun updateRemindersEnabled(enabled: Boolean) {
+        remindersEnabled.value = enabled
+        repository.setHabitRemindersEnabled(enabled)
+        if (enabled) {
+            _habits.value.filter { it.reminderEnabled }.forEach(notifications::scheduleReminder)
+        } else {
+            _habits.value.forEach(notifications::cancelReminder)
+        }
+    }
+
+    fun updateRescueRemindersEnabled(enabled: Boolean) {
+        rescueRemindersEnabled.value = enabled
+        repository.setRescueRemindersEnabled(enabled)
+        notifications.scheduleDebtNagging(_habits.value)
+    }
+
     fun exportBackup(): String = repository.exportBackupJson()
 
     fun importBackup(rawJson: String): Boolean {
         _habits.value.forEach(notifications::cancelReminder)
         val restored = repository.importBackupJson(rawJson)
-        if (restored) loadData()
+        if (restored) {
+            syncSettingsFromRepository()
+            loadData()
+        }
         return restored
     }
 
     fun resetAllData() {
         _habits.value.forEach(notifications::cancelReminder)
         repository.resetAllData()
+        syncSettingsFromRepository()
         loadData()
+    }
+
+    private fun syncSettingsFromRepository() {
+        themeMode.value = repository.getThemeMode()
+        hapticEnabled.value = repository.isHapticEnabled()
+        appLanguage.value = repository.getAppLanguage()
+        reduceMotion.value = repository.isReduceMotionEnabled()
+        remindersEnabled.value = repository.areHabitRemindersEnabled()
+        rescueRemindersEnabled.value = repository.areRescueRemindersEnabled()
     }
 
     fun claimDebt(habitId: String, datesToClaim: List<String>) {
@@ -228,7 +331,11 @@ class StreakViewModel(application: Application) : AndroidViewModel(application) 
         val updatedDebts = (habit.debts + datesToClaim).distinct().sorted()
         val updated = habit.copy(
             debts = updatedDebts,
-            streakCount = StreakCalculator.calculate(habit.completionHistory, updatedDebts)
+            streakCount = StreakCalculator.calculate(
+                habit.completionHistory,
+                updatedDebts,
+                pausedDates = habit.pausedDates
+            )
         )
         val next = _habits.value.map { if (it.id == habitId) updated else it }
         persist(next, habitId)
@@ -241,7 +348,11 @@ class StreakViewModel(application: Application) : AndroidViewModel(application) 
         val updated = habit.copy(
             completionHistory = updatedHistory,
             debts = updatedDebts,
-            streakCount = StreakCalculator.calculate(updatedHistory, updatedDebts)
+            streakCount = StreakCalculator.calculate(
+                updatedHistory,
+                updatedDebts,
+                pausedDates = habit.pausedDates
+            )
         )
         val next = _habits.value.map { if (it.id == habitId) updated else it }
         persist(next, habitId)
@@ -251,12 +362,25 @@ class StreakViewModel(application: Application) : AndroidViewModel(application) 
         val reconciledDebts = StreakCalculator.reconcileDebts(
             startDate = habit.startDate,
             completedDates = habit.completionHistory,
-            existingDebtDates = habit.debts
+            existingDebtDates = habit.debts,
+            pausedDates = habit.pausedDates
         )
         return habit.copy(
             debts = reconciledDebts,
-            streakCount = StreakCalculator.calculate(habit.completionHistory, reconciledDebts)
+            streakCount = StreakCalculator.calculate(
+                habit.completionHistory,
+                reconciledDebts,
+                pausedDates = habit.pausedDates
+            )
         )
+    }
+
+    private fun rescheduleNotifications() {
+        _habits.value.forEach(notifications::cancelReminder)
+        if (remindersEnabled.value) {
+            _habits.value.filter { it.reminderEnabled }.forEach(notifications::scheduleReminder)
+        }
+        notifications.scheduleDebtNagging(_habits.value)
     }
 
     private fun persist(next: List<Habit>, selectedId: String?) {

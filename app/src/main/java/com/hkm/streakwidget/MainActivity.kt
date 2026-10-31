@@ -12,8 +12,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.hkm.streakwidget.data.localizedFor
+import com.hkm.streakwidget.ui.AppScreen
 import com.hkm.streakwidget.ui.StreakViewModel
 import com.hkm.streakwidget.ui.screens.MainScreen
 import com.hkm.streakwidget.ui.theme.StreakWidgetTheme
@@ -31,14 +38,33 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         requestNotificationPermission()
-        intent.getStringExtra("HABIT_ID")?.let(viewModel::focusHabitById)
-        setContent { StreakWidgetTheme(mode = viewModel.themeMode.value) { MainScreen(viewModel) } }
+        routeIntent(intent)
+        setContent {
+            val language = viewModel.appLanguage.value
+            val baseContext = LocalContext.current
+            val localizedContext = remember(language, baseContext) { baseContext.localizedFor(language) }
+            CompositionLocalProvider(
+                LocalContext provides localizedContext,
+                LocalConfiguration provides localizedContext.resources.configuration,
+                LocalResources provides localizedContext.resources
+            ) {
+                StreakWidgetTheme(mode = viewModel.themeMode.value) { MainScreen(viewModel) }
+            }
+        }
     }
 
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        intent.getStringExtra("HABIT_ID")?.let(viewModel::focusHabitById)
+        routeIntent(intent)
+    }
+
+    private fun routeIntent(intent: Intent?) {
+        when (intent?.action) {
+            ACTION_OPEN_TODAY -> viewModel.requestScreen(AppScreen.HOME)
+            ACTION_OPEN_INSIGHTS -> viewModel.requestScreen(AppScreen.INSIGHTS)
+        }
+        intent?.getStringExtra(StreakAppWidgetProvider.EXTRA_HABIT_ID)?.let(viewModel::focusHabitById)
     }
 
     override fun onStart() {
@@ -60,5 +86,10 @@ class MainActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 101)
+    }
+
+    companion object {
+        const val ACTION_OPEN_TODAY = "com.hkm.streakwidget.shortcut.TODAY"
+        const val ACTION_OPEN_INSIGHTS = "com.hkm.streakwidget.shortcut.INSIGHTS"
     }
 }

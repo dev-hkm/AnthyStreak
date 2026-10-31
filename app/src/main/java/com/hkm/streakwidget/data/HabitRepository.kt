@@ -108,17 +108,46 @@ class HabitRepository internal constructor(private val prefs: SharedPreferences)
         prefs.edit().putString("settings_anim_intensity", intensity).apply()
     }
 
+    fun getAppLanguage(): AppLanguage =
+        AppLanguage.fromPreference(prefs.getString("settings_app_language", null))
+
+    fun setAppLanguage(language: AppLanguage) {
+        prefs.edit().putString("settings_app_language", language.preferenceValue).apply()
+    }
+
+    fun isReduceMotionEnabled(): Boolean = prefs.getBoolean("settings_reduce_motion", false)
+
+    fun setReduceMotionEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean("settings_reduce_motion", enabled).apply()
+    }
+
+    fun areHabitRemindersEnabled(): Boolean = prefs.getBoolean("settings_reminders_enabled", true)
+
+    fun setHabitRemindersEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean("settings_reminders_enabled", enabled).apply()
+    }
+
+    fun areRescueRemindersEnabled(): Boolean = prefs.getBoolean("settings_rescue_enabled", true)
+
+    fun setRescueRemindersEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean("settings_rescue_enabled", enabled).apply()
+    }
+
     // Export JSON string for Backup
     fun exportBackupJson(): String {
         val backup = JSONObject()
         val habitsArray = JSONArray()
         getAllHabits().forEach { habitsArray.put(it.toJsonObject()) }
-        backup.put("version", 2)
+        backup.put("version", 3)
         backup.put("habits", habitsArray)
         backup.put("focused_habit_id", getFocusedHabitId() ?: JSONObject.NULL)
         backup.put("settings_haptic_enabled", isHapticEnabled())
         backup.put("settings_theme_mode", getThemeMode())
         backup.put("settings_anim_intensity", getAnimationIntensity())
+        backup.put("settings_app_language", getAppLanguage().preferenceValue)
+        backup.put("settings_reduce_motion", isReduceMotionEnabled())
+        backup.put("settings_reminders_enabled", areHabitRemindersEnabled())
+        backup.put("settings_rescue_enabled", areRescueRemindersEnabled())
         return backup.toString(4) // pretty print
     }
 
@@ -127,7 +156,7 @@ class HabitRepository internal constructor(private val prefs: SharedPreferences)
         return try {
             val backup = JSONObject(jsonString)
             val version = backup.optInt("version", 1)
-            if (version > 2) return false // unsupported newer versions
+            if (version > 3) return false // unsupported newer versions
             
             val habitsArray = backup.getJSONArray("habits")
             val habitsList = mutableListOf<Habit>()
@@ -151,6 +180,18 @@ class HabitRepository internal constructor(private val prefs: SharedPreferences)
             }
             if (backup.has("settings_anim_intensity")) {
                 setAnimationIntensity(backup.getString("settings_anim_intensity"))
+            }
+            if (backup.has("settings_app_language")) {
+                setAppLanguage(AppLanguage.fromPreference(backup.optString("settings_app_language")))
+            }
+            if (backup.has("settings_reduce_motion")) {
+                setReduceMotionEnabled(backup.getBoolean("settings_reduce_motion"))
+            }
+            if (backup.has("settings_reminders_enabled")) {
+                setHabitRemindersEnabled(backup.getBoolean("settings_reminders_enabled"))
+            }
+            if (backup.has("settings_rescue_enabled")) {
+                setRescueRemindersEnabled(backup.getBoolean("settings_rescue_enabled"))
             }
             true
         } catch (e: Exception) {

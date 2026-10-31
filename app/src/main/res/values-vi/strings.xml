@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Common -->
+    <string name="common_back">Quay lại</string>
+    <string name="common_cancel">Hủy</string>
+    <string name="common_close">Đóng</string>
+    <string name="common_done">Xong</string>
+    <string name="common_delete">Xóa</string>
+    <string name="common_save">Lưu</string>
+    <string name="common_settings">Cài đặt</string>
+    <string name="common_today">Hôm nay</string>
+    <string name="common_add">Thêm</string>
+    <string name="cd_back">Quay lại</string>
+    <string name="cd_cancel">Hủy</string>
+    <string name="cd_settings">Mở cài đặt</string>
+    <string name="cd_insights">Mở thống kê</string>
+    <string name="cd_manage_goal">Quản lý %1$s</string>
+    <string name="cd_add_task">Thêm việc</string>
+    <string name="cd_remove_task">Xóa việc</string>
+    <string name="cd_delete_note">Xóa ghi chú</string>
+    <string name="cd_open_tasks">Mở việc hôm nay</string>
+    <string name="cd_color">Màu %1$s</string>
+    <string name="cd_theme">Giao diện %1$s</string>
+    <string name="cd_format">Định dạng %1$s</string>
+    <string name="cd_goal">Mục tiêu %1$s</string>
+
+    <!-- Tabs -->
+    <string name="tab_today">Hôm nay</string>
+    <string name="tab_goals">Mục tiêu</string>
+
+    <!-- Snacks -->
+    <string name="snack_backup_saved">Đã lưu bản sao lưu</string>
+    <string name="snack_backup_failed">Không lưu được bản sao lưu</string>
+    <string name="snack_backup_restored">Đã khôi phục bản sao lưu</string>
+    <string name="snack_backup_invalid">Tệp sao lưu này không khôi phục được</string>
+    <string name="snack_goal_archived">Đã chuyển mục tiêu vào kho lưu</string>
+    <string name="snack_goal_restored">Đã khôi phục mục tiêu</string>
+    <string name="snack_goal_deleted">Đã xóa mục tiêu</string>
+    <string name="snack_all_reset">Đã xóa toàn bộ dữ liệu trên máy</string>
+    <string name="snack_day_paid">Đã trả ngày %1$s</string>
+    <string name="snack_streak_protected">Đã giữ chuỗi streak. Mỗi ngày sẽ có một lời nhắc nhẹ nhàng cho đến khi bạn trả xong.</string>
+    <string name="snack_paused">Hôm nay đang tạm nghỉ. Chuỗi streak vẫn an toàn.</string>
+    <string name="snack_resumed">Chào mừng trở lại. Hôm nay lại được tính.</string>
+
+    <!-- Today -->
+    <plurals name="today_streak_label">
+        <item quantity="one">ngày liên tiếp</item>
+        <item quantity="other">ngày liên tiếp</item>
+    </plurals>
+    <string name="today_claim_banner">Có một ngày bị lỡ. Giữ chuỗi streak của bạn (%1$d).</string>
+    <plurals name="today_debt_badge">
+        <item quantity="one">Đang nợ %1$d ngày · chạm để quản lý</item>
+        <item quantity="other">Đang nợ %1$d ngày · chạm để quản lý</item>
+    </plurals>
+    <string name="today_tasks_shortcut">%1$d trên %2$d việc</string>
+    <string name="today_lighting">Đang thắp lửa streak</string>
+    <string name="today_nurturing">Đang chăm cây bonsai</string>
+    <string name="today_view_progress">Xem tiến độ</string>
+    <string name="today_add_note">Thêm ghi chú</string>
+    <string name="today_notes_count">Ghi chú (%1$d)</string>
+    <string name="today_check_in">Điểm danh</string>
+    <string name="today_undo_check_in">Bỏ điểm danh</string>
+    <string name="today_empty_title">Bắt đầu với một lời hứa.</string>
+    <string name="today_empty_body">Một việc nhỏ làm mỗi ngày là đủ để tạo đà.</string>
+    <string name="today_create_first">Tạo mục tiêu đầu tiên</string>
+    <string name="today_pause_today">Tạm nghỉ hôm nay</string>
+    <string name="today_resume_today">Tiếp tục hôm nay</string>
+    <string name="today_paused_title">Đang tạm nghỉ</string>
+    <string name="today_paused_body">Hôm nay bạn được nghỉ. Chuỗi streak vẫn an toàn.</string>
+    <string name="today_next_milestone">Mốc tiếp theo: %1$d ngày</string>
+
+    <!-- Goal row -->
+    <string name="goal_status_archived">Đã lưu trữ</string>
+    <string name="goal_all_completed">Đã xong cả %1$d việc</string>
+    <string name="goal_progress">Đã xong %1$d trên %2$d việc</string>
+    <string name="goal_completed_today">Hôm nay đã xong</string>
+    <string name="goal_ready_today">Sẵn sàng cho hôm nay</string>
+    <string name="goal_paused_today">Hôm nay tạm nghỉ</string>
+    <string name="goal_day">ngày</string>
+    <string name="goal_days">ngày</string>
+
+    <!-- Debt and history -->
+    <string name="debt_claim_title">Giữ chuỗi streak của bạn</string>
+    <string name="debt_claim_body">Đã lỡ %1$d ngày: %2$s. Hai ngày ân hạn tự động đã dùng hết, nên ngày này cần bạn đồng ý.</string>
+    <string name="debt_claim_detail">Một ngày cứu streak sẽ giữ chuỗi nguyên vẹn trong khi bạn bắt kịp. AnthyStreak gửi một lời nhắc nhẹ mỗi ngày cho đến khi bạn trả xong.</string>
+    <string name="debt_claim_commit">Mình sẽ trả lại ngày này và tiếp tục.</string>
+    <string name="debt_claim_confirm">Giữ chuỗi streak</string>
+    <string name="debt_claim_later">Để sau</string>
+    <string name="debt_manage_title">Những ngày cứu streak</string>
+    <string name="debt_manage_body">Bạn đang giữ %1$d ngày. Mỗi ngày giúp chuỗi streak sống tiếp, kèm một lời nhắc nhẹ mỗi ngày cho đến khi bạn trả lại.</string>
+    <string name="debt_unpaid">Chưa trả</string>
+    <string name="debt_pay">Trả lại</string>
+    <string name="history_title">Tiến độ của bạn</string>
+    <string name="history_week">TUẦN NÀY</string>
+    <string name="history_debt_badge">CỨU STREAK</string>
+    <string name="history_debts_title">Ngày cứu đang mở</string>
+    <string name="history_explainer">Hai ngày bị lỡ được tự động giữ hộ. Sau đó, bạn có thể chọn giữ một ngày và trả lại sau. Ngày đã trả lại sẽ thành một lần điểm danh bình thường.</string>
+    <string name="stat_best_run">Chuỗi dài nhất</string>
+    <string name="stat_check_ins">Lần điểm danh</string>
+    <string name="stat_started">Bắt đầu</string>
+
+    <!-- Notes -->
+    <string name="notes_title">Ghi chú streak</string>
+    <string name="notes_empty">Ghi lại điều đã giúp bạn, điều đã xảy ra, hoặc hôm nay bạn cảm thấy thế nào.</string>
+    <string name="notes_label">Ghi chú mới</string>
+    <string name="notes_placeholder">Hôm nay đã có chuyện gì?</string>
+    <string name="notes_add">Thêm ghi chú</string>
+
+    <!-- Todos -->
+    <string name="todos_title">Việc hôm nay</string>
+    <string name="todos_progress">Đã xong %1$d trên %2$d việc</string>
+    <string name="todos_completed">Đã xong</string>
+
+    <!-- Goals -->
+    <string name="goals_eyebrow">MỤC TIÊU CỦA TÔI</string>
+    <string name="goals_title">Giữ đúng những lời hứa.</string>
+    <string name="goals_new">Mục tiêu mới</string>
+    <string name="goals_empty">Chưa có mục tiêu nào. Tạo một cái để bắt đầu.</string>
+    <string name="goals_archived">ĐÃ LƯU TRỮ</string>
+
+    <!-- Goal editor -->
+    <string name="editor_new_title">Mục tiêu hằng ngày mới</string>
+    <string name="editor_edit_title">Sửa mục tiêu</string>
+    <string name="editor_new_body">Chọn một việc thực tế đến mức hôm nay bạn làm được.</string>
+    <string name="editor_edit_body">Điều chỉnh mục tiêu cho vừa với cuộc sống hiện tại.</string>
+    <string name="editor_name">Mục tiêu</string>
+    <string name="editor_name_placeholder">Tập thể dục</string>
+    <string name="editor_why">Vì sao điều này quan trọng (không bắt buộc)</string>
+    <string name="editor_theme_section">GIAO DIỆN</string>
+    <string name="editor_theme_flame">Ngọn lửa</string>
+    <string name="editor_theme_flame_detail">Cháy sáng hơn</string>
+    <string name="editor_theme_tree">Cây bonsai</string>
+    <string name="editor_theme_tree_detail">Lớn lên cùng streak</string>
+    <string name="editor_format_section">ĐỊNH DẠNG</string>
+    <string name="editor_format_goal">Mục tiêu</string>
+    <string name="editor_format_goal_detail">Một lời hứa</string>
+    <string name="editor_format_checklist">Danh sách việc</string>
+    <string name="editor_format_checklist_detail">Các bước mỗi ngày</string>
+    <string name="editor_tasks_section">VIỆC HẰNG NGÀY</string>
+    <string name="editor_tasks_body">Các việc này tự đặt lại vào ngày mai.</string>
+    <string name="editor_task_label">Thêm một việc</string>
+    <string name="editor_task_placeholder">3 hiệp squat</string>
+    <string name="editor_add_task">Thêm việc</string>
+    <string name="editor_color_flame">MÀU NGỌN LỬA</string>
+    <string name="editor_color_accent">MÀU NHẤN</string>
+    <string name="editor_color_flame_body">Chỉ đổi màu ngọn lửa của bạn.</string>
+    <string name="editor_color_accent_body">Đổi màu lá, hoa và quầng sáng.</string>
+    <string name="editor_reminder">Nhắc hằng ngày</string>
+    <string name="editor_reminder_detail">Một lời nhắc nhẹ vào giờ bạn chọn</string>
+    <string name="editor_time">Giờ nhắc</string>
+    <string name="editor_time_placeholder">20:00</string>
+    <string name="editor_time_error">Dùng giờ 24 tiếng, ví dụ 20:00</string>
+    <string name="editor_create">Tạo mục tiêu</string>
+    <string name="editor_save">Lưu thay đổi</string>
+    <string name="editor_templates">Bắt đầu từ mẫu</string>
+    <string name="editor_templates_detail">Một điểm khởi đầu chỉn chu và có thể sửa.</string>
+    <string name="editor_templates_title">Chọn điểm khởi đầu</string>
+    <string name="editor_templates_body">Chọn một mẫu, rồi làm nó thành của bạn.</string>
+    <string name="template_use">Dùng mẫu này</string>
+    <string name="template_water_title">Uống nhiều nước hơn</string>
+    <string name="template_water_note">Từng ngụm nhỏ cộng lại thành thói quen.</string>
+    <string name="template_read_title">Đọc 10 trang sách</string>
+    <string name="template_read_note">Mỗi ngày vài trang sẽ thành một thư viện.</string>
+    <string name="template_move_title">Vận động 20 phút</string>
+    <string name="template_move_note">Vận động làm cả ngày nhẹ hơn.</string>
+    <string name="template_meditate_title">Thiền 5 phút</string>
+    <string name="template_meditate_note">Năm phút bình tĩnh là đủ.</string>
+    <string name="template_study_title">Học một khối tập trung</string>
+    <string name="template_study_note">Một khối học thật lòng tốt hơn một giờ vụn vặt.</string>
+    <string name="template_study_task_review">Xem lại ghi chú hôm nay</string>
+    <string name="template_study_task_practice">Luyện 10 câu hỏi</string>
+    <string name="template_study_task_summary">Tóm tắt điều đã học</string>
+    <string name="template_sleep_title">Đi ngủ đúng giờ</string>
+    <string name="template_sleep_note">Một cái kết nhẹ nhàng làm ngày mai dễ hơn.</string>
+    <string name="template_sleep_task_screens">Tắt màn hình 30 phút trước khi ngủ</string>
+    <string name="template_sleep_task_prepare">Chuẩn bị cho ngày mai</string>
+    <string name="template_sleep_task_lights">Tắt đèn đúng giờ</string>
+
+    <!-- Manage -->
+    <string name="manage_body">Quản lý mục tiêu hằng ngày ở một nơi.</string>
+    <string name="manage_archived_body">Mục tiêu này đã được lưu trữ. Khôi phục trước khi sửa hoặc theo dõi lại.</string>
+    <string name="manage_restore">Khôi phục mục tiêu</string>
+    <string name="manage_restore_detail">Đưa mục tiêu trở lại danh sách đang hoạt động</string>
+    <string name="manage_edit">Sửa chi tiết</string>
+    <string name="manage_edit_detail">Đổi mục tiêu, ngọn lửa hoặc các việc</string>
+    <string name="manage_archive">Lưu trữ mục tiêu</string>
+    <string name="manage_archive_detail">Ẩn đi mà không mất lịch sử</string>
+    <string name="manage_delete">Xóa vĩnh viễn</string>
+    <string name="manage_delete_detail">Xóa mục tiêu này và toàn bộ lịch sử</string>
+    <string name="manage_delete_warning">Chạm Xóa bên dưới để gỡ mục tiêu này vĩnh viễn.</string>
+    <string name="manage_delete_button">Xóa</string>
+
+    <!-- Settings -->
+    <string name="settings_subtitle">Làm AnthyStreak thành của bạn.</string>
+    <string name="settings_appearance">Hiển thị</string>
+    <string name="settings_theme_system">Hệ thống</string>
+    <string name="settings_theme_light">Sáng</string>
+    <string name="settings_theme_dark">Tối</string>
+    <string name="settings_language">Ngôn ngữ</string>
+    <string name="settings_language_detail">Áp dụng cho ứng dụng, widget và lời nhắc.</string>
+    <string name="settings_language_system">Theo thiết bị</string>
+    <string name="settings_feel">Cảm giác</string>
+    <string name="settings_haptics">Phản hồi rung</string>
+    <string name="settings_haptics_detail">Một phản hồi chạm cho các thao tác chính</string>
+    <string name="settings_reduce_motion">Giảm chuyển động</string>
+    <string name="settings_reduce_motion_detail">Chuyển sang hiệu ứng mờ dần và bỏ đoạn phim thắp lửa.</string>
+    <string name="settings_notifications">Thông báo</string>
+    <string name="settings_reminders">Nhắc hằng ngày</string>
+    <string name="settings_reminders_detail">Một lời nhắc nhẹ vào giờ bạn chọn cho từng mục tiêu.</string>
+    <string name="settings_rescue">Nhắc cứu streak</string>
+    <string name="settings_rescue_detail">Một lời nhắc nhẹ mỗi ngày khi còn ngày cứu đang mở.</string>
+    <string name="settings_permission">Quyền thông báo Android</string>
+    <string name="settings_permission_allowed">Đã cho phép</string>
+    <string name="settings_permission_blocked">Chưa cho phép</string>
+    <string name="settings_permission_allow">Cho phép</string>
+    <string name="settings_permission_manage">Quản lý</string>
+    <string name="settings_data">Dữ liệu của bạn</string>
+    <string name="settings_export">Xuất bản sao lưu JSON</string>
+    <string name="settings_export_detail">Lưu một tệp sao lưu mang đi được</string>
+    <string name="settings_import">Nhập bản sao lưu JSON</string>
+    <string name="settings_import_detail">Khôi phục từ một tệp sao lưu</string>
+    <string name="settings_reset">Xóa dữ liệu trên máy</string>
+    <string name="settings_reset_detail">Gỡ mọi mục tiêu và lần điểm danh trên máy</string>
+    <string name="settings_reset_warning">Sau khi xác nhận sẽ không thể hoàn tác.</string>
+    <string name="settings_reset_confirm">Xác nhận xóa</string>
+    <string name="settings_about">Giới thiệu</string>
+    <string name="settings_about_body">Mọi thứ ở lại trên thiết bị này. Không tài khoản, không đám mây, không theo dõi.</string>
+    <string name="settings_version">Phiên bản %1$s</string>
+
+    <!-- Insights -->
+    <string name="insights_eyebrow">THỐNG KÊ</string>
+    <string name="insights_title">Thống kê</string>
+    <string name="insights_no_goal">Tạo một mục tiêu trước để xem thống kê.</string>
+    <string name="insights_subtitle">Những quy luật phía sau chuỗi streak.</string>
+    <string name="insights_current">Chuỗi hiện tại</string>
+    <string name="insights_best">Chuỗi dài nhất</string>
+    <string name="insights_checkins">Lần điểm danh</string>
+    <string name="insights_consistency">Độ đều đặn</string>
+    <string name="insights_heatmap">8 TUẦN GẦN NHẤT</string>
+    <string name="insights_heatmap_detail">Mỗi ô là một ngày. Ô trống là trước khi mục tiêu bắt đầu.</string>
+    <string name="insights_weekdays">NGÀY TỐT NHẤT</string>
+    <string name="insights_milestones">CỘT MỐC</string>
+    <string name="insights_empty">Thống kê sẽ hiện sau lần điểm danh đầu tiên.</string>
+    <string name="insights_next">Mốc tiếp theo: %1$d ngày</string>
+    <string name="insights_all_milestones">Đã chạm mọi mốc. Cứ nhẹ nhàng tiếp tục.</string>
+    <string name="insights_legend_done">Đã xong</string>
+    <string name="insights_legend_protected">Cứu streak</string>
+    <string name="insights_legend_paused">Tạm nghỉ</string>
+    <string name="insights_legend_missed">Đã lỡ</string>
+    <string name="insights_summary">Đã xong %1$d trên %2$d ngày hoạt động.</string>
+    <string name="insights_debt_count">%1$d ngày cứu đang mở</string>
+    <string name="insights_pause_count">%1$d ngày tạm nghỉ</string>
+    <string name="insights_weekday_monday">T2</string>
+    <string name="insights_weekday_tuesday">T3</string>
+    <string name="insights_weekday_wednesday">T4</string>
+    <string name="insights_weekday_thursday">T5</string>
+    <string name="insights_weekday_friday">T6</string>
+    <string name="insights_weekday_saturday">T7</string>
+    <string name="insights_weekday_sunday">CN</string>
+    <string-array name="insights_weekday_labels">
+        <item>T2</item>
+        <item>T3</item>
+        <item>T4</item>
+        <item>T5</item>
+        <item>T6</item>
+        <item>T7</item>
+        <item>CN</item>
+    </string-array>
+
+    <!-- Milestones -->
+    <string name="milestone_eyebrow">CỘT MỐC</string>
+    <string name="milestone_title">%1$d ngày</string>
+    <string name="milestone_body">%1$s đã chạm %2$d ngày. Cứ giữ lời hứa nhẹ nhàng và đều đặn.</string>
+    <string name="milestone_continue">Tiếp tục</string>
+
+    <!-- Widget -->
+    <string name="widget_description">Một chuỗi streak gọn gàng với điểm danh một chạm</string>
+    <string name="widget_preview_count">0</string>
+    <string name="widget_preview_days">NGÀY</string>
+    <string name="widget_preview_today">HÔM NAY</string>
+    <string name="widget_preview_goal">Lời hứa hằng ngày</string>
+    <string name="widget_preview_status">SẴN SÀNG HÔM NAY</string>
+    <string name="widget_preview_check_in">ĐIỂM DANH</string>
+    <string name="widget_eyebrow_today">HÔM NAY</string>
+    <string name="widget_eyebrow_empty">WIDGET</string>
+    <plurals name="widget_days">
+        <item quantity="one">NGÀY</item>
+        <item quantity="other">NGÀY</item>
+    </plurals>
+    <string name="widget_empty_title">Bắt đầu mục tiêu đầu tiên</string>
+    <string name="widget_empty_status">MỖI LẦN MỘT LỜI HỨA</string>
+    <string name="widget_create_goal">TẠO MỤC TIÊU</string>
+    <string name="widget_ready">SẴN SÀNG HÔM NAY</string>
+    <string name="widget_secured">HÔM NAY ĐÃ XONG</string>
+    <string name="widget_check_in">ĐIỂM DANH</string>
+    <string name="widget_paused">ĐANG NGHỈ</string>
+    <string name="widget_open">MỞ</string>
+    <string name="widget_task_progress">%1$d TRÊN %2$d VIỆC</string>
+    <string name="widget_cd_empty">Bắt đầu mục tiêu hằng ngày đầu tiên</string>
+    <string name="widget_cd_summary">%1$s, %2$d %3$s</string>
+
+    <!-- Widget configuration -->
+    <string name="config_eyebrow">WIDGET</string>
+    <string name="config_title_goal">Chọn một mục tiêu hằng ngày</string>
+    <string name="config_title_style">Chọn diện mạo</string>
+    <string name="config_empty_title">Tạo một lời hứa trước đã.</string>
+    <string name="config_empty_body">Widget sẽ sẵn sàng ngay khi có mục tiêu.</string>
+    <string name="config_open_app">Mở AnthyStreak</string>
+    <string name="config_goal_hint_new">Widget sẽ theo mục tiêu này. Bạn có thể thêm widget khác cho mục tiêu khác.</string>
+    <string name="config_goal_hint_existing">Đổi cấu hình widget này mà không ảnh hưởng các widget khác.</string>
+    <string name="config_style_hint">%1$s · kiểu đã lưu vẫn giữ nguyên khi launcher đổi kích thước widget.</string>
+    <string name="config_back">Quay lại</string>
+    <string name="config_add">Thêm widget</string>
+    <string name="config_update">Cập nhật widget</string>
+    <string name="config_completed">Hôm nay đã xong</string>
+    <string name="config_ready">Sẵn sàng hôm nay</string>
+    <string name="config_use_goal">Dùng %1$s trong widget</string>
+    <string name="config_style_ember">Ember</string>
+    <string name="config_style_focus">Focus</string>
+    <string name="config_style_checklist">Checklist</string>
+    <string name="config_style_poster">Poster</string>
+    <string name="config_style_ember_desc">Ngọn lửa và streak, gọn cho mọi kích thước.</string>
+    <string name="config_style_focus_desc">Mục tiêu, trạng thái và điểm danh trực tiếp.</string>
+    <string name="config_style_checklist_desc">Tiến độ việc hằng ngày được ưu tiên hiển thị.</string>
+    <string name="config_style_checklist_fallback">Tạm dùng Focus cho đến khi mục tiêu có danh sách việc.</string>
+    <string name="config_style_poster_desc">Ngọn lửa và con số lớn trên cỡ Square và Hero.</string>
+    <string name="config_selected">ĐÃ CHỌN</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_reminders_name">Nhắc mục tiêu hằng ngày</string>
+    <string name="notification_channel_reminders_desc">Một lời nhắc nhẹ vào giờ bạn chọn cho từng mục tiêu.</string>
+    <string name="notification_channel_rescue_name">Cứu chuỗi streak</string>
+    <string name="notification_channel_rescue_desc">Một lời nhắc nhẹ mỗi ngày khi có ngày cứu cần quan tâm.</string>
+    <string name="notification_reminder_title">%1$s đang chờ bạn</string>
+    <string name="notification_reminder_body">Vài phút hôm nay là đủ để giữ lời hứa.</string>
+    <string name="notification_rescue_title">%1$s cần một chút quan tâm</string>
+    <string name="notification_rescue_unclaimed">Có một ngày bị lỡ. Mở AnthyStreak khi bạn rảnh và chọn cách giữ chuỗi streak tiếp tục.</string>
+    <plurals name="notification_rescue_debt">
+        <item quantity="one">Đang mở %1$d ngày cứu. Trả lại khi bạn sẵn sàng, không cần vội.</item>
+        <item quantity="other">Đang mở %1$d ngày cứu. Trả lại khi bạn sẵn sàng, không cần vội.</item>
+    </plurals>
+
+    <!-- Shortcuts and tile -->
+    <string name="shortcut_today_short">Hôm nay</string>
+    <string name="shortcut_today_long">Mở mục tiêu hôm nay</string>
+    <string name="shortcut_insights_short">Thống kê</string>
+    <string name="shortcut_insights_long">Xem quy luật streak</string>
+    <string name="tile_label">Điểm danh</string>
+    <string name="tile_ready">Sẵn sàng điểm danh</string>
+    <string name="tile_secured">Hôm nay đã xong</string>
+    <string name="tile_paused">Đang tạm nghỉ</string>
+    <string name="tile_no_goal">Thêm mục tiêu trước</string>
+</resources>

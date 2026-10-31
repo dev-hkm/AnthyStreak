@@ -1,5 +1,281 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">AnthyStreak</string>
+
+    <!-- Common -->
+    <string name="common_back">Back</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="common_close">Close</string>
+    <string name="common_done">Done</string>
+    <string name="common_delete">Delete</string>
+    <string name="common_save">Save</string>
+    <string name="common_settings">Settings</string>
+    <string name="common_today">Today</string>
+    <string name="common_add">Add</string>
+    <string name="cd_back">Back</string>
+    <string name="cd_cancel">Cancel</string>
+    <string name="cd_settings">Open settings</string>
+    <string name="cd_insights">Open insights</string>
+    <string name="cd_manage_goal">Manage %1$s</string>
+    <string name="cd_add_task">Add task</string>
+    <string name="cd_remove_task">Remove task</string>
+    <string name="cd_delete_note">Delete note</string>
+    <string name="cd_open_tasks">Open daily tasks</string>
+    <string name="cd_color">%1$s color</string>
+    <string name="cd_theme">%1$s theme</string>
+    <string name="cd_format">%1$s format</string>
+    <string name="cd_goal">%1$s goal</string>
+
+    <!-- Tabs -->
+    <string name="tab_today">Today</string>
+    <string name="tab_goals">My goals</string>
+
+    <!-- Snacks -->
+    <string name="snack_backup_saved">Backup saved</string>
+    <string name="snack_backup_failed">Could not save the backup</string>
+    <string name="snack_backup_restored">Backup restored</string>
+    <string name="snack_backup_invalid">That backup file could not be restored</string>
+    <string name="snack_goal_archived">Goal moved to the archive</string>
+    <string name="snack_goal_restored">Goal restored</string>
+    <string name="snack_goal_deleted">Goal deleted</string>
+    <string name="snack_all_reset">All local data was reset</string>
+    <string name="snack_day_paid">Day %1$s paid back</string>
+    <string name="snack_streak_protected">Streak protected. One calm reminder a day until you catch up.</string>
+    <string name="snack_paused">Today is paused. Your streak stays safe.</string>
+    <string name="snack_resumed">Welcome back. Today counts again.</string>
+
+    <!-- Today -->
+    <plurals name="today_streak_label">
+        <item quantity="one">day streak</item>
+        <item quantity="other">days streak</item>
+    </plurals>
+    <string name="today_claim_banner">A day slipped. Protect your streak (%1$d).</string>
+    <plurals name="today_debt_badge">
+        <item quantity="one">%1$d day owed · tap to manage</item>
+        <item quantity="other">%1$d days owed · tap to manage</item>
+    </plurals>
+    <string name="today_tasks_shortcut">%1$d of %2$d tasks</string>
+    <string name="today_lighting">Lighting your streak</string>
+    <string name="today_nurturing">Nurturing your bonsai</string>
+    <string name="today_view_progress">View progress</string>
+    <string name="today_add_note">Add note</string>
+    <string name="today_notes_count">Notes (%1$d)</string>
+    <string name="today_check_in">Check in</string>
+    <string name="today_undo_check_in">Undo check-in</string>
+    <string name="today_empty_title">Start with one promise.</string>
+    <string name="today_empty_body">A tiny action, repeated daily, is enough to create momentum.</string>
+    <string name="today_create_first">Create your first goal</string>
+    <string name="today_pause_today">Pause today</string>
+    <string name="today_resume_today">Resume today</string>
+    <string name="today_paused_title">Planned break</string>
+    <string name="today_paused_body">Today is paused. Your streak stays safe while you rest.</string>
+    <string name="today_next_milestone">Next milestone: %1$d days</string>
+
+    <!-- Goal row -->
+    <string name="goal_status_archived">Archived</string>
+    <string name="goal_all_completed">All %1$d completed</string>
+    <string name="goal_progress">%1$d of %2$d completed</string>
+    <string name="goal_completed_today">Completed today</string>
+    <string name="goal_ready_today">Ready for today</string>
+    <string name="goal_paused_today">Paused today</string>
+    <string name="goal_day">day</string>
+    <string name="goal_days">days</string>
+
+    <!-- Debt and history -->
+    <string name="debt_claim_title">Protect your streak</string>
+    <string name="debt_claim_body">%1$d missed day: %2$s. The two automatic grace days are already used, so this one needs your consent.</string>
+    <string name="debt_claim_detail">A rescue day keeps the streak intact while you catch up. AnthyStreak will send one calm reminder a day until it is paid.</string>
+    <string name="debt_claim_commit">I will pay this day back and keep going.</string>
+    <string name="debt_claim_confirm">Keep my streak</string>
+    <string name="debt_claim_later">Not now</string>
+    <string name="debt_manage_title">Streak rescue days</string>
+    <string name="debt_manage_body">You are protecting %1$d day. Each one keeps your streak alive, with one calm reminder a day until you pay it back.</string>
+    <string name="debt_unpaid">Not paid yet</string>
+    <string name="debt_pay">Pay back</string>
+    <string name="history_title">Your progress</string>
+    <string name="history_week">THIS WEEK</string>
+    <string name="history_debt_badge">RESCUE</string>
+    <string name="history_debts_title">Active rescue days</string>
+    <string name="history_explainer">Two missed days are covered automatically. After that, you can choose to protect a day and pay it back later. Paid days become check-ins again.</string>
+    <string name="stat_best_run">Best run</string>
+    <string name="stat_check_ins">Check-ins</string>
+    <string name="stat_started">Started</string>
+
+    <!-- Notes -->
+    <string name="notes_title">Streak notes</string>
+    <string name="notes_empty">Capture what helped, what happened, or how today felt.</string>
+    <string name="notes_label">New note</string>
+    <string name="notes_placeholder">What happened today?</string>
+    <string name="notes_add">Add note</string>
+
+    <!-- Todos -->
+    <string name="todos_title">Today’s tasks</string>
+    <string name="todos_progress">%1$d of %2$d complete</string>
+    <string name="todos_completed">Completed</string>
+
+    <!-- Goals -->
+    <string name="goals_eyebrow">MY GOALS</string>
+    <string name="goals_title">Keep the right promises.</string>
+    <string name="goals_new">New goal</string>
+    <string name="goals_empty">No active goals yet. Create one to begin.</string>
+    <string name="goals_archived">ARCHIVED</string>
+
+    <!-- Goal editor -->
+    <string name="editor_new_title">New daily goal</string>
+    <string name="editor_edit_title">Edit goal</string>
+    <string name="editor_new_body">Choose something realistic enough to do today.</string>
+    <string name="editor_edit_body">Make this goal fit the life you have now.</string>
+    <string name="editor_name">Goal</string>
+    <string name="editor_name_placeholder">Workout</string>
+    <string name="editor_why">Why it matters (optional)</string>
+    <string name="editor_theme_section">VISUAL THEME</string>
+    <string name="editor_theme_flame">Flame</string>
+    <string name="editor_theme_flame_detail">Burns brighter</string>
+    <string name="editor_theme_tree">Bonsai tree</string>
+    <string name="editor_theme_tree_detail">Grows with your streak</string>
+    <string name="editor_format_section">FORMAT</string>
+    <string name="editor_format_goal">Goal</string>
+    <string name="editor_format_goal_detail">One promise</string>
+    <string name="editor_format_checklist">To-do list</string>
+    <string name="editor_format_checklist_detail">Daily steps</string>
+    <string name="editor_tasks_section">DAILY TASKS</string>
+    <string name="editor_tasks_body">These reset automatically tomorrow.</string>
+    <string name="editor_task_label">Add a task</string>
+    <string name="editor_task_placeholder">3 sets of squats</string>
+    <string name="editor_add_task">Add task</string>
+    <string name="editor_color_flame">FLAME COLOR</string>
+    <string name="editor_color_accent">ACCENT COLOR</string>
+    <string name="editor_color_flame_body">This changes your flame only.</string>
+    <string name="editor_color_accent_body">Tints leaves, blossoms, and aura.</string>
+    <string name="editor_reminder">Daily reminder</string>
+    <string name="editor_reminder_detail">A gentle nudge at your chosen time</string>
+    <string name="editor_time">Reminder time</string>
+    <string name="editor_time_placeholder">20:00</string>
+    <string name="editor_time_error">Use 24-hour time, for example 20:00</string>
+    <string name="editor_create">Create goal</string>
+    <string name="editor_save">Save changes</string>
+    <string name="editor_templates">Start from a template</string>
+    <string name="editor_templates_detail">A thoughtful starting point you can edit.</string>
+    <string name="editor_templates_title">Choose a starting point</string>
+    <string name="editor_templates_body">Pick one, then make it yours.</string>
+    <string name="template_use">Use this template</string>
+    <string name="template_water_title">Drink more water</string>
+    <string name="template_water_note">Small sips add up.</string>
+    <string name="template_read_title">Read 10 pages</string>
+    <string name="template_read_note">A few pages a day builds a library.</string>
+    <string name="template_move_title">Move for 20 minutes</string>
+    <string name="template_move_note">Movement makes the whole day lighter.</string>
+    <string name="template_meditate_title">Meditate for 5 minutes</string>
+    <string name="template_meditate_note">Five calm minutes are enough.</string>
+    <string name="template_study_title">Study one focus block</string>
+    <string name="template_study_note">One honest block beats a scattered hour.</string>
+    <string name="template_study_task_review">Review today’s notes</string>
+    <string name="template_study_task_practice">Practice 10 questions</string>
+    <string name="template_study_task_summary">Summarize what you learned</string>
+    <string name="template_sleep_title">Wind down on time</string>
+    <string name="template_sleep_note">A calm ending makes tomorrow easier.</string>
+    <string name="template_sleep_task_screens">Screens off 30 minutes before bed</string>
+    <string name="template_sleep_task_prepare">Prepare for tomorrow</string>
+    <string name="template_sleep_task_lights">Lights out on time</string>
+
+    <!-- Manage -->
+    <string name="manage_body">Manage this daily goal from one place.</string>
+    <string name="manage_archived_body">This goal is archived. Restore it before editing or tracking it again.</string>
+    <string name="manage_restore">Restore goal</string>
+    <string name="manage_restore_detail">Return it to your active goals</string>
+    <string name="manage_edit">Edit details</string>
+    <string name="manage_edit_detail">Change the goal, flame, or tasks</string>
+    <string name="manage_archive">Archive goal</string>
+    <string name="manage_archive_detail">Hide it without deleting history</string>
+    <string name="manage_delete">Delete permanently</string>
+    <string name="manage_delete_detail">Remove this goal and its history</string>
+    <string name="manage_delete_warning">Tap Delete below to permanently remove this goal.</string>
+    <string name="manage_delete_button">Delete</string>
+
+    <!-- Settings -->
+    <string name="settings_subtitle">Make AnthyStreak feel like yours.</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_language_detail">Applies to the app, widgets, and reminders.</string>
+    <string name="settings_language_system">Device language</string>
+    <string name="settings_feel">Feel</string>
+    <string name="settings_haptics">Haptic feedback</string>
+    <string name="settings_haptics_detail">A tactile response for key actions</string>
+    <string name="settings_reduce_motion">Reduce motion</string>
+    <string name="settings_reduce_motion_detail">Fades instead of slides and skips the ignition cinematic.</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_reminders">Daily reminders</string>
+    <string name="settings_reminders_detail">A gentle nudge at each goal’s chosen time.</string>
+    <string name="settings_rescue">Streak rescue reminders</string>
+    <string name="settings_rescue_detail">One calm reminder a day while a rescue day is open.</string>
+    <string name="settings_permission">Android notification permission</string>
+    <string name="settings_permission_allowed">Allowed</string>
+    <string name="settings_permission_blocked">Not allowed</string>
+    <string name="settings_permission_allow">Allow</string>
+    <string name="settings_permission_manage">Manage</string>
+    <string name="settings_data">Your data</string>
+    <string name="settings_export">Export backup JSON</string>
+    <string name="settings_export_detail">Save a portable backup file</string>
+    <string name="settings_import">Import backup JSON</string>
+    <string name="settings_import_detail">Restore from a backup file</string>
+    <string name="settings_reset">Reset local data</string>
+    <string name="settings_reset_detail">Remove every local goal and check-in</string>
+    <string name="settings_reset_warning">This cannot be undone once confirmed.</string>
+    <string name="settings_reset_confirm">Confirm reset</string>
+    <string name="settings_about">About</string>
+    <string name="settings_about_body">Everything stays on this device. No account, no cloud, no tracking.</string>
+    <string name="settings_version">Version %1$s</string>
+
+    <!-- Insights -->
+    <string name="insights_eyebrow">INSIGHTS</string>
+    <string name="insights_title">Insights</string>
+    <string name="insights_no_goal">Create a goal first to see its patterns.</string>
+    <string name="insights_subtitle">Patterns behind the streak.</string>
+    <string name="insights_current">Current streak</string>
+    <string name="insights_best">Best run</string>
+    <string name="insights_checkins">Check-ins</string>
+    <string name="insights_consistency">Consistency</string>
+    <string name="insights_heatmap">LAST 8 WEEKS</string>
+    <string name="insights_heatmap_detail">Each square is one day. Empty squares were before this goal began.</string>
+    <string name="insights_weekdays">BEST DAYS</string>
+    <string name="insights_milestones">MILESTONES</string>
+    <string name="insights_empty">Insights appear after your first check-in.</string>
+    <string name="insights_next">Next milestone: %1$d days</string>
+    <string name="insights_all_milestones">Every milestone reached. Keep going gently.</string>
+    <string name="insights_legend_done">Done</string>
+    <string name="insights_legend_protected">Rescue</string>
+    <string name="insights_legend_paused">Paused</string>
+    <string name="insights_legend_missed">Missed</string>
+    <string name="insights_summary">%1$d of %2$d active days completed.</string>
+    <string name="insights_debt_count">%1$d rescue days open</string>
+    <string name="insights_pause_count">%1$d paused days</string>
+    <string name="insights_weekday_monday">Mon</string>
+    <string name="insights_weekday_tuesday">Tue</string>
+    <string name="insights_weekday_wednesday">Wed</string>
+    <string name="insights_weekday_thursday">Thu</string>
+    <string name="insights_weekday_friday">Fri</string>
+    <string name="insights_weekday_saturday">Sat</string>
+    <string name="insights_weekday_sunday">Sun</string>
+    <string-array name="insights_weekday_labels">
+        <item>Mon</item>
+        <item>Tue</item>
+        <item>Wed</item>
+        <item>Thu</item>
+        <item>Fri</item>
+        <item>Sat</item>
+        <item>Sun</item>
+    </string-array>
+
+    <!-- Milestones -->
+    <string name="milestone_eyebrow">MILESTONE</string>
+    <string name="milestone_title">%1$d days</string>
+    <string name="milestone_body">%1$s reached %2$d days. Keep the promise gentle and steady.</string>
+    <string name="milestone_continue">Keep going</string>
+
+    <!-- Widget -->
     <string name="widget_description">A focused daily streak with one-tap check-in</string>
     <string name="widget_preview_count">0</string>
     <string name="widget_preview_days">DAYS</string>
@@ -7,4 +283,73 @@
     <string name="widget_preview_goal">Your daily promise</string>
     <string name="widget_preview_status">READY FOR TODAY</string>
     <string name="widget_preview_check_in">CHECK IN</string>
+    <string name="widget_eyebrow_today">TODAY</string>
+    <string name="widget_eyebrow_empty">WIDGET</string>
+    <plurals name="widget_days">
+        <item quantity="one">DAY</item>
+        <item quantity="other">DAYS</item>
+    </plurals>
+    <string name="widget_empty_title">Start your first goal</string>
+    <string name="widget_empty_status">ONE PROMISE AT A TIME</string>
+    <string name="widget_create_goal">CREATE GOAL</string>
+    <string name="widget_ready">READY TODAY</string>
+    <string name="widget_secured">TODAY SECURED</string>
+    <string name="widget_check_in">CHECK IN</string>
+    <string name="widget_paused">ON BREAK</string>
+    <string name="widget_open">OPEN</string>
+    <string name="widget_task_progress">%1$d OF %2$d TASKS</string>
+    <string name="widget_cd_empty">Start your first daily goal</string>
+    <string name="widget_cd_summary">%1$s, %2$d %3$s</string>
+
+    <!-- Widget configuration -->
+    <string name="config_eyebrow">WIDGET</string>
+    <string name="config_title_goal">Choose a daily goal</string>
+    <string name="config_title_style">Choose its character</string>
+    <string name="config_empty_title">Create one promise first.</string>
+    <string name="config_empty_body">Your widget will be ready as soon as a goal exists.</string>
+    <string name="config_open_app">Open AnthyStreak</string>
+    <string name="config_goal_hint_new">The widget follows this goal directly. You can add another widget for another goal.</string>
+    <string name="config_goal_hint_existing">Reconfigure this widget without affecting your other placements.</string>
+    <string name="config_style_hint">%1$s · your saved style stays intact when the launcher resizes the widget.</string>
+    <string name="config_back">Back</string>
+    <string name="config_add">Add widget</string>
+    <string name="config_update">Update widget</string>
+    <string name="config_completed">Today secured</string>
+    <string name="config_ready">Ready for today</string>
+    <string name="config_use_goal">Use %1$s in widget</string>
+    <string name="config_style_ember">Ember</string>
+    <string name="config_style_focus">Focus</string>
+    <string name="config_style_checklist">Checklist</string>
+    <string name="config_style_poster">Poster</string>
+    <string name="config_style_ember_desc">Flame and streak, distilled for every size.</string>
+    <string name="config_style_focus_desc">Goal, state and direct daily check-in.</string>
+    <string name="config_style_checklist_desc">Daily task progress gets the strongest supporting line.</string>
+    <string name="config_style_checklist_fallback">Falls back to Focus until this goal has a checklist.</string>
+    <string name="config_style_poster_desc">Oversized flame and count on Square and Hero sizes.</string>
+    <string name="config_selected">SELECTED</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_reminders_name">Daily goal reminders</string>
+    <string name="notification_channel_reminders_desc">A gentle nudge at the time you chose for each goal.</string>
+    <string name="notification_channel_rescue_name">Streak rescue</string>
+    <string name="notification_channel_rescue_desc">A calm daily heads-up when a rescue day needs attention.</string>
+    <string name="notification_reminder_title">%1$s is waiting for you</string>
+    <string name="notification_reminder_body">A few minutes today keeps the promise alive.</string>
+    <string name="notification_rescue_title">%1$s needs a moment</string>
+    <string name="notification_rescue_unclaimed">A day slipped by. Open AnthyStreak when you can and decide how to keep your streak going.</string>
+    <plurals name="notification_rescue_debt">
+        <item quantity="one">%1$d rescue day is open. Pay it back when you are ready, no rush.</item>
+        <item quantity="other">%1$d rescue days are open. Pay them back when you are ready, no rush.</item>
+    </plurals>
+
+    <!-- Shortcuts and tile -->
+    <string name="shortcut_today_short">Today</string>
+    <string name="shortcut_today_long">Open today’s goal</string>
+    <string name="shortcut_insights_short">Insights</string>
+    <string name="shortcut_insights_long">See your streak patterns</string>
+    <string name="tile_label">Check in</string>
+    <string name="tile_ready">Ready to check in</string>
+    <string name="tile_secured">Today secured</string>
+    <string name="tile_paused">On a planned break</string>
+    <string name="tile_no_goal">Add a goal first</string>
 </resources>

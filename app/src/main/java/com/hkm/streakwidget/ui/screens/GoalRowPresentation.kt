@@ -15,7 +15,26 @@ internal data class GoalRowPresentation(
     val primaryAction: GoalRowPrimaryAction
 )
 
-internal fun goalRowPresentation(habit: Habit, today: String): GoalRowPresentation {
+internal data class GoalRowCopy(
+    val archived: String = "Archived",
+    val allCompleted: String = "All %1\$d completed",
+    val progress: String = "%1\$d of %2\$d completed",
+    val completedToday: String = "Completed today",
+    val readyToday: String = "Ready for today",
+    val pausedToday: String = "Paused today",
+    val day: String = "day",
+    val days: String = "days"
+) {
+    companion object {
+        val English = GoalRowCopy()
+    }
+}
+
+internal fun goalRowPresentation(
+    habit: Habit,
+    today: String,
+    copy: GoalRowCopy = GoalRowCopy.English
+): GoalRowPresentation {
     val completedTodos = habit.todoItems.count { it.isCompletedOn(today) }
     val checklistComplete = habit.goalType == GoalType.CHECKLIST &&
         habit.todoItems.isNotEmpty() && completedTodos == habit.todoItems.size
@@ -25,13 +44,16 @@ internal fun goalRowPresentation(habit: Habit, today: String): GoalRowPresentati
         today in habit.completionHistory
     }
     val status = when {
-        habit.isArchived -> "Archived"
-        habit.goalType == GoalType.CHECKLIST && checklistComplete -> "All $completedTodos completed"
-        habit.goalType == GoalType.CHECKLIST -> "$completedTodos of ${habit.todoItems.size} completed"
-        completed -> "Completed today"
-        else -> "Ready for today"
+        habit.isArchived -> copy.archived
+        habit.goalType == GoalType.CHECKLIST && checklistComplete ->
+            String.format(copy.allCompleted, completedTodos)
+        habit.isPausedOn(today) -> copy.pausedToday
+        habit.goalType == GoalType.CHECKLIST ->
+            String.format(copy.progress, completedTodos, habit.todoItems.size)
+        completed -> copy.completedToday
+        else -> copy.readyToday
     }
-    val dayLabel = if (habit.streakCount == 1) "day" else "days"
+    val dayLabel = if (habit.streakCount == 1) copy.day else copy.days
 
     return GoalRowPresentation(
         statusText = status,

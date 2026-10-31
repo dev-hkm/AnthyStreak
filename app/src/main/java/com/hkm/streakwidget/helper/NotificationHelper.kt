@@ -7,23 +7,26 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import com.hkm.streakwidget.R
+import com.hkm.streakwidget.data.HabitRepository
+import com.hkm.streakwidget.data.localizedFor
+import com.hkm.streakwidget.domain.StreakCalculator
 import com.hkm.streakwidget.model.Habit
 import com.hkm.streakwidget.receiver.HabitReminderReceiver
 import java.util.Calendar
 
 class NotificationHelper(private val context: Context) {
+    private val repository = HabitRepository(context)
+    private val localized: Context
+        get() = context.localizedFor(repository.getAppLanguage())
 
     companion object {
         const val CHANNEL_ID = "habit_reminder_channel"
-        const val CHANNEL_NAME = "Habit Reminders"
-        const val CHANNEL_DESC = "Notifications reminding you of your daily habits"
+        const val DEBT_CHANNEL_ID = "streak_rescue_channel"
 
-        const val DEBT_CHANNEL_ID = "streak_debt_channel"
-        const val DEBT_CHANNEL_NAME = "Streak Debt Urgency"
-        const val DEBT_CHANNEL_DESC = "Urgent daily alerts and reminders to pay streak debts"
-
-        const val REQUEST_CODE_DEBT_MORNING = 8881
-        const val REQUEST_CODE_DEBT_EVENING = 8882
+        /** One calm rescue nudge a day; legacy codes are cancelled so old alarms disappear. */
+        const val REQUEST_CODE_RESCUE = 8883
+        private val LEGACY_RESCUE_CODES = intArrayOf(8881, 8882)
     }
 
     init {
@@ -31,24 +34,32 @@ class NotificationHelper(private val context: Context) {
     }
 
     private fun createNotificationChannels() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        val resources = localized.resources
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-            val standardChannel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT).apply {
-                description = CHANNEL_DESC
-            }
-            notificationManager.createNotificationChannel(standardChannel)
-
-            val debtChannel = NotificationChannel(DEBT_CHANNEL_ID, DEBT_CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH).apply {
-                description = DEBT_CHANNEL_DESC
-                enableVibration(true)
-            }
-            notificationManager.createNotificationChannel(debtChannel)
+        val reminderChannel = NotificationChannel(
+            CHANNEL_ID,
+            resources.getString(R.string.notification_channel_reminders_name),
+            NotificationManager.IMPORTANCE_DEFAULT
+        ).apply {
+            description = resources.getString(R.string.notification_channel_reminders_desc)
         }
+        manager.createNotificationChannel(reminderChannel)
+
+        val rescueChannel = NotificationChannel(
+            DEBT_CHANNEL_ID,
+            resources.getString(R.string.notification_channel_rescue_name),
+            NotificationManager.IMPORTANCE_DEFAULT
+        ).apply {
+            description = resources.getString(R.string.notification_channel_rescue_desc)
+            enableVibration(false)
+        }
+        manager.createNotificationChannel(rescueChannel)
     }
 
     fun scheduleReminder(habit: Habit) {
-        if (!habit.reminderEnabled || habit.reminderTime.isNullOrBlank()) {
+        if (!repository.areHabitRemindersEnabled() || !habit.reminderEnabled || habit.reminderTime.isNullOrBlank()) {
             cancelReminder(habit)
             return
         }
@@ -62,8 +73,6 @@ class NotificationHelper(private val context: Context) {
         val intent = Intent(context, HabitReminderReceiver::class.java).apply {
             action = HabitReminderReceiver.ACTION_HABIT_REMINDER
             putExtra("HABIT_ID", habit.id)
-            putExtra("HABIT_NAME", habit.name)
-            putExtra("HABIT_NOTE", habit.motivationNote)
         }
 
         val pendingIntent = PendingIntent.getBroadcast(
@@ -79,10 +88,7 @@ class NotificationHelper(private val context: Context) {
             set(Calendar.MINUTE, minute)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
-
-            if (timeInMillis <= System.currentTimeMillis()) {
-                add(Calendar.DAY_OF_YEAR, 1)
-            }
+            if (timeInMillis <= System.currentTimeMillis()) add(Calendar.DAY_OF_YEAR, 1)
         }
 
         scheduleAlarm(alarmManager, calendar.timeInMillis, pendingIntent)
@@ -106,27 +112,30 @@ class NotificationHelper(private val context: Context) {
     }
 
     /**
-     * Relentlessly schedules daily nagging & warning notifications at 10:00 and 20:30
-     * whenever any active habit has debts or unclaimed missed days.
+     * A single, calm rescue reminder at 19:00. Goals already completed or paused for
+     * today never trigger it, and turning the preference off cancels it immediately.
      */
     fun scheduleDebtNagging(habits: List<Habit>) {
-        val hasActiveDebt = habits.any { !it.isArchived && (it.debts.isNotEmpty() || it.unclaimedMissedDates().isNotEmpty()) }
+        val today = StreakCalculator.todayString()
+        val hasActiveDebt = repository.areRescueRemindersEnabled() && habits.any { habit ->
+            !habit.isArchived &&
+                !habit.isPausedOn(today) &&
+                (habit.debts.isNotEmpty() || habit.unclaimedMissedDates(today).isNotEmpty())
+        }
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
         if (!hasActiveDebt) {
-            cancelDebtNagAlarm(alarmManager, REQUEST_CODE_DEBT_MORNING)
-            cancelDebtNagAlarm(alarmManager, REQUEST_CODE_DEBT_EVENING)
+            cancelDebtNagAlarm(alarmManager, REQUEST_CODE_RESCUE)
+            LEGACY_RESCUE_CODES.forEach { cancelDebtNagAlarm(alarmManager, it) }
             return
         }
 
-        scheduleDailyDebtNag(alarmManager, 10, 0, REQUEST_CODE_DEBT_MORNING)
-        scheduleDailyDebtNag(alarmManager, 20, 30, REQUEST_CODE_DEBT_EVENING)
+        scheduleDailyDebtNag(alarmManager, 19, 0, REQUEST_CODE_RESCUE)
     }
 
     private fun scheduleDailyDebtNag(alarmManager: AlarmManager, hour: Int, minute: Int, requestCode: Int) {
         val intent = Intent(context, HabitReminderReceiver::class.java).apply {
             action = HabitReminderReceiver.ACTION_DEBT_NAG
-            putExtra("NAG_HOUR", hour)
         }
         val pendingIntent = PendingIntent.getBroadcast(
             context,
@@ -140,10 +149,7 @@ class NotificationHelper(private val context: Context) {
             set(Calendar.MINUTE, minute)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
-
-            if (timeInMillis <= System.currentTimeMillis()) {
-                add(Calendar.DAY_OF_YEAR, 1)
-            }
+            if (timeInMillis <= System.currentTimeMillis()) add(Calendar.DAY_OF_YEAR, 1)
         }
         scheduleAlarm(alarmManager, calendar.timeInMillis, pendingIntent)
     }
@@ -167,12 +173,8 @@ class NotificationHelper(private val context: Context) {
     private fun scheduleAlarm(alarmManager: AlarmManager, triggerAtMillis: Long, pendingIntent: PendingIntent) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    if (alarmManager.canScheduleExactAlarms()) {
-                        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
-                    } else {
-                        alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
-                    }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
+                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
                 } else {
                     alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
                 }

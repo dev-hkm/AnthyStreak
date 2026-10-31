@@ -33,9 +33,9 @@ class WidgetLayoutSpecTest {
     }
 
     @Test
-    fun `poster selection falls back to ember only for tile`() {
+    fun `poster selection falls back to ember for sizes without a detail hierarchy`() {
         assertEquals(WidgetStyle.EMBER, resolvedStyle(WidgetSize.TILE, WidgetStyle.POSTER, hasChecklist = false))
-        assertEquals(WidgetStyle.POSTER, resolvedStyle(WidgetSize.STRIP, WidgetStyle.POSTER, hasChecklist = false))
+        assertEquals(WidgetStyle.EMBER, resolvedStyle(WidgetSize.STRIP, WidgetStyle.POSTER, hasChecklist = false))
         assertEquals(WidgetStyle.POSTER, resolvedStyle(WidgetSize.WIDE, WidgetStyle.POSTER, hasChecklist = false))
         assertEquals(WidgetStyle.POSTER, resolvedStyle(WidgetSize.HERO, WidgetStyle.POSTER, hasChecklist = false))
     }

@@ -69,13 +69,22 @@ data class Habit(
     val streakCount: Int = 0,
     val completionHistory: List<String> = emptyList(), // List of YYYY-MM-DD
     val debts: List<String> = emptyList(), // List of YYYY-MM-DD
+    val pausedDates: List<String> = emptyList(), // Days intentionally taken off
     val notes: List<StreakNote> = emptyList(),
     val isArchived: Boolean = false,
     val goalType: GoalType = GoalType.GOAL,
     val todoItems: List<TodoItem> = emptyList()
 ) {
+    fun isPausedOn(date: String): Boolean = date in pausedDates
+
     fun unclaimedMissedDates(today: String = com.hkm.streakwidget.domain.StreakCalculator.todayString()): List<String> =
-        com.hkm.streakwidget.domain.StreakCalculator.getUnclaimedMissedDates(startDate, completionHistory, debts, today)
+        com.hkm.streakwidget.domain.StreakCalculator.getUnclaimedMissedDates(
+            startDate = startDate,
+            completedDates = completionHistory,
+            debts = debts,
+            today = today,
+            pausedDates = pausedDates
+        )
 
     fun toJsonObject(): JSONObject {
         val json = JSONObject()
@@ -98,6 +107,10 @@ data class Habit(
         val debtsArray = JSONArray()
         debts.forEach { debtsArray.put(it) }
         json.put("debts", debtsArray)
+
+        val pausedArray = JSONArray()
+        pausedDates.forEach { pausedArray.put(it) }
+        json.put("pausedDates", pausedArray)
 
         val notesArray = JSONArray()
         notes.forEach { notesArray.put(it.toJsonObject()) }
@@ -126,6 +139,14 @@ data class Habit(
             if (debtsArray != null) {
                 for (i in 0 until debtsArray.length()) {
                     debtsList.add(debtsArray.getString(i))
+                }
+            }
+
+            val pausedList = mutableListOf<String>()
+            val pausedArray = json.optJSONArray("pausedDates")
+            if (pausedArray != null) {
+                for (i in 0 until pausedArray.length()) {
+                    pausedList.add(pausedArray.getString(i))
                 }
             }
 
@@ -173,6 +194,7 @@ data class Habit(
                 streakCount = json.optInt("streakCount", 0),
                 completionHistory = historyList,
                 debts = debtsList,
+                pausedDates = pausedList,
                 notes = notes,
                 isArchived = json.optBoolean("isArchived", false),
                 goalType = goalType,

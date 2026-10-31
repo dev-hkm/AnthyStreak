@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.6.0 — 2026-10-31
+
+### Added
+- Full English and Vietnamese localization for the app, widgets, reminders, settings, and configuration screen.
+- Full-screen Settings with appearance, language, feel, notification, and data preferences.
+- Insights screen with an eight-week heatmap, best days, milestones, and streak summary.
+- Milestone celebrations at 3, 7, 14, 30, 60, 100, 180, and 365 days.
+- Pause mode: take a planned break without losing the earned streak.
+- Habit templates to start a goal with a thoughtful, editable setup.
+- Launcher shortcuts for Today and Insights, plus a Quick Settings check-in tile.
+- Predictive back with progress-linked visuals across screens.
+
+### Changed
+- Replaced every hand-drawn icon with Phosphor Light icons and removed emoji from all copy.
+- Rewrote notifications and rescue reminders in a calmer, friendlier bilingual voice.
+- Rebuilt widget layouts so every size, including the minimum crop, stays readable with no clipped text.
+
 ## 1.5.0 — 2026-09-27
 
 ### Added

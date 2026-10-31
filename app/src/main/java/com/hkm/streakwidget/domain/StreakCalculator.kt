@@ -19,14 +19,16 @@ object StreakCalculator {
         completedDates: List<String>,
         existingDebtDates: List<String>,
         today: String = todayString(),
-        maxAutoDebts: Int = MAX_AUTO_DEBTS
+        maxAutoDebts: Int = MAX_AUTO_DEBTS,
+        pausedDates: List<String> = emptyList()
     ): List<String> {
         val todayDate = parseDate(today) ?: return emptyList()
         val completed = completedDates.filter(::isValidDate).toSet()
+        val paused = pausedDates.filter(::isValidDate).toSet()
         val validExisting = existingDebtDates
             .filter(::isValidDate)
             .filter { date -> parseDate(date)?.before(todayDate) == true }
-            .filter { it !in completed }
+            .filter { it !in completed && it !in paused }
             .toSet()
 
         val debts = validExisting.toMutableSet()
@@ -48,7 +50,7 @@ object StreakCalculator {
 
         while (cursor.before(todayDate)) {
             val date = format(cursor)
-            if (date !in completed && date !in debts) {
+            if (date !in completed && date !in debts && date !in paused) {
                 if (autoDebtsRemaining > 0) {
                     debts += date
                     autoDebtsRemaining -= 1
@@ -68,11 +70,13 @@ object StreakCalculator {
         startDate: String,
         completedDates: List<String>,
         debts: List<String>,
-        today: String = todayString()
+        today: String = todayString(),
+        pausedDates: List<String> = emptyList()
     ): List<String> {
         val todayDate = parseDate(today) ?: return emptyList()
         val completed = completedDates.filter(::isValidDate).toSet()
         val currentDebts = debts.filter(::isValidDate).toSet()
+        val paused = pausedDates.filter(::isValidDate).toSet()
 
         val firstCompletedDate = completed
             .mapNotNull(::parseDate)
@@ -89,7 +93,7 @@ object StreakCalculator {
         val unclaimed = mutableListOf<String>()
         while (cursor.before(todayDate)) {
             val date = format(cursor)
-            if (date !in completed && date !in currentDebts) {
+            if (date !in completed && date !in currentDebts && date !in paused) {
                 unclaimed += date
             }
             cursor.add(Calendar.DAY_OF_YEAR, 1)
@@ -100,23 +104,27 @@ object StreakCalculator {
     fun calculate(
         completedDates: List<String>,
         protectedDates: List<String>,
-        today: String = todayString()
+        today: String = todayString(),
+        pausedDates: List<String> = emptyList()
     ): Int {
         val completed = completedDates.toSet()
         val protected = protectedDates.toSet()
+        val paused = pausedDates.toSet()
         val calendar = parseDate(today) ?: return 0
 
         var streak = 0
-        if (completed.contains(today)) {
-            streak += 1
+        if (!completed.contains(today) && !protected.contains(today) && !paused.contains(today)) {
+            // Today is still actionable, so it never breaks yesterday's earned streak.
             calendar.add(Calendar.DAY_OF_YEAR, -1)
-        } else {
-            calendar.add(Calendar.DAY_OF_YEAR, -1)
-            if (!completed.contains(format(calendar)) && !protected.contains(format(calendar))) return 0
         }
 
-        while (completed.contains(format(calendar)) || protected.contains(format(calendar))) {
-            streak += 1
+        while (true) {
+            val date = format(calendar)
+            when {
+                date in paused -> Unit
+                date in completed || date in protected -> streak += 1
+                else -> break
+            }
             calendar.add(Calendar.DAY_OF_YEAR, -1)
         }
         return streak
@@ -132,21 +140,33 @@ object StreakCalculator {
         }
     }
 
-    fun longestRun(completedDates: List<String>, protectedDates: List<String>): Int {
-        val days = (completedDates + protectedDates).filter(::isValidDate).toSortedSet()
+    fun longestRun(
+        completedDates: List<String>,
+        protectedDates: List<String>,
+        pausedDates: List<String> = emptyList()
+    ): Int {
+        val paused = pausedDates.filter(::isValidDate).toSet()
+        val days = (completedDates + protectedDates)
+            .filter(::isValidDate)
+            .filter { it !in paused }
+            .toSortedSet()
         if (days.isEmpty()) return 0
 
-        var best = 1
-        var current = 1
-        for (index in 1 until days.size) {
-            val previous = parseDate(days.elementAt(index - 1)) ?: continue
-            previous.add(Calendar.DAY_OF_YEAR, 1)
-            if (format(previous) == days.elementAt(index)) {
-                current += 1
-                best = maxOf(best, current)
-            } else {
-                current = 1
+        var best = 0
+        var current = 0
+        val cursor = parseDate(days.first()) ?: return 0
+        val last = parseDate(days.last()) ?: return 0
+        while (!cursor.after(last)) {
+            val date = format(cursor)
+            when {
+                date in paused -> Unit
+                date in days -> {
+                    current += 1
+                    best = maxOf(best, current)
+                }
+                else -> current = 0
             }
+            cursor.add(Calendar.DAY_OF_YEAR, 1)
         }
         return best
     }
