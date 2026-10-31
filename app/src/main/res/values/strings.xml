@@ -21,6 +21,8 @@
     <string name="cd_remove_task">Remove task</string>
     <string name="cd_delete_note">Delete note</string>
     <string name="cd_open_tasks">Open daily tasks</string>
+    <string name="cd_dock_rescue">Open streak rescue days</string>
+    <string name="cd_dock_notes">Open streak notes</string>
     <string name="cd_color">%1$s color</string>
     <string name="cd_theme">%1$s theme</string>
     <string name="cd_format">%1$s format</string>
@@ -49,17 +51,8 @@
         <item quantity="one">day streak</item>
         <item quantity="other">days streak</item>
     </plurals>
-    <string name="today_claim_banner">A day slipped. Protect your streak (%1$d).</string>
-    <plurals name="today_debt_badge">
-        <item quantity="one">%1$d day owed · tap to manage</item>
-        <item quantity="other">%1$d days owed · tap to manage</item>
-    </plurals>
-    <string name="today_tasks_shortcut">%1$d of %2$d tasks</string>
     <string name="today_lighting">Lighting your streak</string>
     <string name="today_nurturing">Nurturing your bonsai</string>
-    <string name="today_view_progress">View progress</string>
-    <string name="today_add_note">Add note</string>
-    <string name="today_notes_count">Notes (%1$d)</string>
     <string name="today_check_in">Check in</string>
     <string name="today_undo_check_in">Undo check-in</string>
     <string name="today_empty_title">Start with one promise.</string>
@@ -68,7 +61,6 @@
     <string name="today_pause_today">Pause today</string>
     <string name="today_resume_today">Resume today</string>
     <string name="today_paused_title">Planned break</string>
-    <string name="today_paused_body">Today is paused. Your streak stays safe while you rest.</string>
     <string name="today_next_milestone">Next milestone: %1$d days</string>
 
     <!-- Goal row -->
@@ -92,14 +84,6 @@
     <string name="debt_manage_body">You are protecting %1$d day. Each one keeps your streak alive, with one calm reminder a day until you pay it back.</string>
     <string name="debt_unpaid">Not paid yet</string>
     <string name="debt_pay">Pay back</string>
-    <string name="history_title">Your progress</string>
-    <string name="history_week">THIS WEEK</string>
-    <string name="history_debt_badge">RESCUE</string>
-    <string name="history_debts_title">Active rescue days</string>
-    <string name="history_explainer">Two missed days are covered automatically. After that, you can choose to protect a day and pay it back later. Paid days become check-ins again.</string>
-    <string name="stat_best_run">Best run</string>
-    <string name="stat_check_ins">Check-ins</string>
-    <string name="stat_started">Started</string>
 
     <!-- Notes -->
     <string name="notes_title">Streak notes</string>
@@ -293,7 +277,7 @@
     <string name="widget_empty_status">ONE PROMISE AT A TIME</string>
     <string name="widget_create_goal">CREATE GOAL</string>
     <string name="widget_ready">READY TODAY</string>
-    <string name="widget_secured">TODAY SECURED</string>
+    <string name="widget_secured">DONE</string>
     <string name="widget_check_in">CHECK IN</string>
     <string name="widget_paused">ON BREAK</string>
     <string name="widget_open">OPEN</string>

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 56 x 48dp minimum: flame + count only, sized to survive a 1x1 crop. -->
+<!-- 56 x 48dp minimum: a dominant flame with the count tucked beside it. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_bg_shape"
-    android:padding="4dp">
+    android:padding="3dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -14,19 +14,19 @@
         android:orientation="horizontal">
 
         <FrameLayout
-            android:layout_width="22dp"
-            android:layout_height="22dp">
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1.35">
 
-            <ImageView android:id="@+id/widget_flame_glow" android:layout_width="22dp" android:layout_height="22dp" android:layout_gravity="center" android:contentDescription="@null" android:src="@drawable/widget_flame_glow" />
-            <ImageView android:id="@+id/widget_flame_outer" android:layout_width="20dp" android:layout_height="20dp" android:layout_gravity="center" android:contentDescription="@null" android:src="@drawable/ic_widget_flame_outer" />
-            <ImageView android:id="@+id/widget_flame_mid" android:layout_width="16dp" android:layout_height="16dp" android:layout_gravity="center" android:contentDescription="@null" android:src="@drawable/ic_widget_flame_mid" />
-            <ImageView android:id="@+id/widget_flame_inner" android:layout_width="12dp" android:layout_height="12dp" android:layout_gravity="center_horizontal|bottom" android:layout_marginBottom="1dp" android:contentDescription="@null" android:src="@drawable/ic_widget_flame_inner" />
+            <ImageView android:id="@+id/widget_flame_glow" android:layout_width="match_parent" android:layout_height="match_parent" android:contentDescription="@null" android:scaleType="fitCenter" android:src="@drawable/widget_flame_glow" />
+            <ImageView android:id="@+id/widget_flame_outer" android:layout_width="match_parent" android:layout_height="match_parent" android:contentDescription="@null" android:scaleType="fitCenter" android:src="@drawable/ic_widget_flame_outer" />
+            <ImageView android:id="@+id/widget_flame_mid" android:layout_width="match_parent" android:layout_height="match_parent" android:contentDescription="@null" android:padding="6dp" android:scaleType="fitCenter" android:src="@drawable/ic_widget_flame_mid" />
+            <ImageView android:id="@+id/widget_flame_inner" android:layout_width="match_parent" android:layout_height="match_parent" android:contentDescription="@null" android:padding="11dp" android:scaleType="fitCenter" android:src="@drawable/ic_widget_flame_inner" />
         </FrameLayout>
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="2dp"
             android:layout_weight="1"
             android:gravity="center"
             android:orientation="vertical">
@@ -38,14 +38,14 @@
                 android:layout_height="wrap_content"
                 android:autoSizeTextType="uniform"
                 android:autoSizeMinTextSize="9sp"
-                android:autoSizeMaxTextSize="15sp"
+                android:autoSizeMaxTextSize="16sp"
                 android:autoSizeStepGranularity="1sp"
                 android:gravity="center"
                 android:includeFontPadding="false"
                 android:maxLines="1"
                 android:text="@string/widget_preview_count"
                 android:textColor="@color/widget_text_primary"
-                android:textSize="15sp"
+                android:textSize="16sp"
                 android:textStyle="bold" />
 
             <TextView

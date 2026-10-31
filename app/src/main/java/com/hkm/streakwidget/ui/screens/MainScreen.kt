@@ -95,12 +95,12 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -130,8 +130,6 @@ import com.hkm.streakwidget.ui.settings.SettingsScreen
 import com.hkm.streakwidget.ui.theme.AppIcons
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Locale
 
 private enum class AppTab { TODAY, GOALS }
 
@@ -151,7 +149,6 @@ fun MainScreen(viewModel: StreakViewModel) {
     var editorTarget by remember { mutableStateOf<Habit?>(null) }
     var managingHabit by remember { mutableStateOf<Habit?>(null) }
     var showEditor by remember { mutableStateOf(false) }
-    var showHistory by remember { mutableStateOf(false) }
     var showNotes by remember { mutableStateOf(false) }
     var showTodos by remember { mutableStateOf(false) }
     var showClaimDebtDialog by remember { mutableStateOf(false) }
@@ -304,10 +301,6 @@ fun MainScreen(viewModel: StreakViewModel) {
                                     }
                                 }
                             },
-                            onHistory = {
-                                showHistory = true
-                                tapHaptic()
-                            },
                             onNotes = {
                                 showNotes = true
                                 tapHaptic()
@@ -442,18 +435,6 @@ fun MainScreen(viewModel: StreakViewModel) {
     }
 
     focused?.let { habit ->
-        if (showHistory) {
-            HistoryDialog(
-                habit = habit,
-                onDismiss = { showHistory = false },
-                onPayDebt = { date ->
-                    viewModel.payDebt(habit.id, date)
-                    confirmHaptic()
-                    scope.launch { snackbar.showSnackbar(context.getString(R.string.snack_day_paid, date)) }
-                },
-                onHaptic = tapHaptic
-            )
-        }
         if (showClaimDebtDialog) {
             val unclaimed = habit.unclaimedMissedDates()
             if (unclaimed.isNotEmpty()) {
@@ -604,7 +585,6 @@ private fun TodayScreen(
     focused: Habit?,
     ignitionTargetId: String?,
     onToggleToday: (String) -> Unit,
-    onHistory: () -> Unit,
     onNotes: () -> Unit,
     onOpenTodos: () -> Unit,
     onClaimDebt: () -> Unit,
@@ -637,12 +617,12 @@ private fun TodayScreen(
                     isIgniting = ignitionTargetId == habit.id,
                     checkInLocked = ignitionTargetId != null,
                     onToggleToday = onToggleToday,
-                    onHistory = onHistory,
                     onNotes = onNotes,
                     onOpenTodos = onOpenTodos,
                     onClaimDebt = onClaimDebt,
                     onManageDebts = onManageDebts,
-                    onTogglePause = onTogglePause
+                    onTogglePause = onTogglePause,
+                    onInsights = onInsights
                 )
             }
         }
@@ -680,21 +660,6 @@ private fun TodayScreen(
                 color = MaterialTheme.colorScheme.surfaceVariant,
                 border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
             ) {
-                IconButton(onClick = onInsights, modifier = Modifier.size(46.dp)) {
-                    Icon(
-                        imageVector = AppIcons.Chart,
-                        contentDescription = stringResource(R.string.cd_insights),
-                        tint = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-            Spacer(Modifier.width(8.dp))
-            Surface(
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-            ) {
                 IconButton(onClick = onSettings, modifier = Modifier.size(46.dp)) {
                     Icon(
                         imageVector = AppIcons.Gear,
@@ -714,12 +679,12 @@ private fun FocusCard(
     isIgniting: Boolean,
     checkInLocked: Boolean,
     onToggleToday: (String) -> Unit,
-    onHistory: () -> Unit,
     onNotes: () -> Unit,
     onOpenTodos: () -> Unit,
     onClaimDebt: () -> Unit,
     onManageDebts: () -> Unit,
-    onTogglePause: (Boolean) -> Unit
+    onTogglePause: (Boolean) -> Unit,
+    onInsights: () -> Unit
 ) {
     val today = StreakCalculator.todayString()
     val completed = today in habit.completionHistory
@@ -734,6 +699,8 @@ private fun FocusCard(
     }
     val hasTodos = habit.goalType == GoalType.CHECKLIST && habit.todoItems.isNotEmpty()
     val doneTodos = habit.todoItems.count { it.isCompletedOn(today) }
+    val unclaimed = habit.unclaimedMissedDates(today)
+    val rescueCount = unclaimed.size + habit.debts.size
     val buttonContainer = when {
         paused -> MaterialTheme.colorScheme.tertiaryContainer
         completed -> MaterialTheme.colorScheme.secondaryContainer
@@ -791,92 +758,38 @@ private fun FocusCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.SemiBold
             )
-            Spacer(Modifier.height(12.dp))
             if (paused) {
-                Surface(
-                    shape = RoundedCornerShape(18.dp),
-                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.8f),
-                    modifier = Modifier.widthIn(max = 260.dp)
-                ) {
-                    Column(
-                        Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            stringResource(R.string.today_paused_title),
-                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.ExtraBold
-                        )
-                        Text(
-                            stringResource(R.string.today_paused_body),
-                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.78f),
-                            fontSize = 11.sp,
-                            lineHeight = 15.sp,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                }
-            } else {
-                Row(
-                    Modifier
-                        .height(38.dp)
-                        .clip(RoundedCornerShape(19.dp))
-                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(19.dp))
-                        .clickable { onTogglePause(false) }
-                        .padding(horizontal = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        AppIcons.Pause,
+                        AppIcons.Coffee,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(14.dp)
+                        modifier = Modifier.size(13.dp)
                     )
-                    Spacer(Modifier.width(6.dp))
+                    Spacer(Modifier.width(5.dp))
                     Text(
-                        stringResource(R.string.today_pause_today),
+                        stringResource(R.string.today_paused_title),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 12.sp,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
             }
-            val unclaimed = habit.unclaimedMissedDates(today)
-            if (unclaimed.isNotEmpty()) {
-                Spacer(Modifier.height(10.dp))
-                Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.92f),
-                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                    modifier = Modifier.clickable { onClaimDebt() }
-                ) {
-                    Row(
-                        Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            AppIcons.Warning,
-                            contentDescription = null,
-                            modifier = Modifier.size(15.dp)
-                        )
-                        Spacer(Modifier.width(6.dp))
-                        Text(
-                            stringResource(R.string.today_claim_banner, unclaimed.size),
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
-            if (habit.debts.isNotEmpty()) {
-                Spacer(Modifier.height(10.dp))
-                DebtBadge(habit.debts.size, onClick = onManageDebts)
-            }
-            if (hasTodos) {
-                Spacer(Modifier.height(24.dp))
-                TodoShortcut(doneTodos, habit.todoItems.size, onOpenTodos)
-            }
+            Spacer(Modifier.height(18.dp))
+            ControlDock(
+                paused = paused,
+                rescueCount = rescueCount,
+                rescueUrgent = unclaimed.isNotEmpty(),
+                taskDone = doneTodos,
+                taskTotal = if (hasTodos) habit.todoItems.size else 0,
+                noteCount = habit.notes.size,
+                onTogglePause = { onTogglePause(paused) },
+                onRescue = { if (unclaimed.isNotEmpty()) onClaimDebt() else onManageDebts() },
+                onTasks = onOpenTodos,
+                onNotes = onNotes,
+                onProgress = onInsights
+            )
         }
         Column(
             Modifier
@@ -894,26 +807,6 @@ private fun FocusCard(
                     fontWeight = FontWeight.ExtraBold,
                     modifier = Modifier.padding(bottom = 6.dp)
                 )
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = onHistory) {
-                    Text(
-                        stringResource(R.string.today_view_progress),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                TextButton(onClick = onNotes) {
-                    Text(
-                        if (habit.notes.isEmpty()) {
-                            stringResource(R.string.today_add_note)
-                        } else {
-                            stringResource(R.string.today_notes_count, habit.notes.size)
-                        },
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
             }
             Spacer(Modifier.height(6.dp))
             Button(
@@ -938,24 +831,108 @@ private fun FocusCard(
 }
 
 @Composable
-private fun DebtBadge(debtCount: Int, onClick: () -> Unit = {}) {
+private fun ControlDock(
+    paused: Boolean,
+    rescueCount: Int,
+    rescueUrgent: Boolean,
+    taskDone: Int,
+    taskTotal: Int,
+    noteCount: Int,
+    onTogglePause: () -> Unit,
+    onRescue: () -> Unit,
+    onTasks: () -> Unit,
+    onNotes: () -> Unit,
+    onProgress: () -> Unit
+) {
     Surface(
-        shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.78f),
-        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-        modifier = Modifier.clickable { onClick() }
+        shape = RoundedCornerShape(28.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)
+        )
     ) {
         Row(
-            Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+            Modifier.padding(horizontal = 5.dp, vertical = 5.dp),
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(AppIcons.Shield, contentDescription = null, modifier = Modifier.size(14.dp))
-            Spacer(Modifier.width(5.dp))
-            Text(
-                pluralStringResource(R.plurals.today_debt_badge, debtCount, debtCount),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.ExtraBold
+            if (rescueCount > 0) {
+                DockAction(
+                    icon = AppIcons.Shield,
+                    contentDescription = stringResource(R.string.cd_dock_rescue),
+                    tint = if (rescueUrgent) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.tertiary,
+                    badge = rescueCount.toString(),
+                    badgeColor = if (rescueUrgent) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.tertiary,
+                    onClick = onRescue
+                )
+            }
+            if (taskTotal > 0) {
+                DockAction(
+                    icon = AppIcons.ListChecks,
+                    contentDescription = stringResource(R.string.cd_open_tasks),
+                    badge = "$taskDone/$taskTotal",
+                    onClick = onTasks
+                )
+            }
+            DockAction(
+                icon = AppIcons.Note,
+                contentDescription = stringResource(R.string.cd_dock_notes),
+                badge = noteCount.takeIf { it > 0 }?.toString(),
+                onClick = onNotes
             )
+            DockAction(
+                icon = AppIcons.Chart,
+                contentDescription = stringResource(R.string.cd_insights),
+                onClick = onProgress
+            )
+            DockAction(
+                icon = if (paused) AppIcons.Play else AppIcons.Pause,
+                contentDescription = stringResource(
+                    if (paused) R.string.today_resume_today else R.string.today_pause_today
+                ),
+                tint = if (paused) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant,
+                onClick = onTogglePause
+            )
+        }
+    }
+}
+
+@Composable
+private fun DockAction(
+    icon: ImageVector,
+    contentDescription: String,
+    onClick: () -> Unit,
+    tint: Color = MaterialTheme.colorScheme.onSurface,
+    badge: String? = null,
+    badgeColor: Color = MaterialTheme.colorScheme.onSurface
+) {
+    Box(
+        Modifier
+            .size(42.dp)
+            .clip(CircleShape)
+            .clickable(onClick = onClick)
+            .semantics(mergeDescendants = true) { this.contentDescription = contentDescription },
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(19.dp))
+        if (badge != null) {
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = badgeColor,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = 1.dp, y = (-1).dp)
+                    .clearAndSetSemantics { }
+            ) {
+                Text(
+                    badge,
+                    color = MaterialTheme.colorScheme.surface,
+                    fontSize = 8.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                )
+            }
         }
     }
 }
@@ -1169,179 +1146,6 @@ private fun IgnitionBurstOverlay(visible: Boolean, flameColor: Color) {
 }
 
 @Composable
-private fun TodoShortcut(completed: Int, total: Int, onClick: () -> Unit) {
-    Row(
-        Modifier
-            .height(42.dp)
-            .clip(RoundedCornerShape(21.dp))
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(21.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(AppIcons.ListChecks, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(17.dp))
-        Spacer(Modifier.width(8.dp))
-        Text(
-            stringResource(R.string.today_tasks_shortcut, completed, total),
-            color = MaterialTheme.colorScheme.onSurface,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(Modifier.width(5.dp))
-        Icon(
-            AppIcons.ChevronRight,
-            contentDescription = stringResource(R.string.cd_open_tasks),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(16.dp)
-        )
-    }
-}
-
-@Composable
-private fun WeekCard(habit: Habit) {
-    val today = StreakCalculator.todayString()
-    val days = StreakCalculator.weekEndingOn(today)
-    Card(
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(Modifier.padding(18.dp)) {
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    stringResource(R.string.history_week),
-                    fontSize = 11.sp,
-                    letterSpacing = 1.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                if (days.any { it in habit.debts }) {
-                    Text(
-                        stringResource(R.string.history_debt_badge),
-                        fontSize = 10.sp,
-                        letterSpacing = 1.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.tertiary
-                    )
-                }
-            }
-            Spacer(Modifier.height(14.dp))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                days.forEach { day ->
-                    DayMark(day, day in habit.completionHistory, day == today, day in habit.debts)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun DayMark(day: String, complete: Boolean, isToday: Boolean, protected: Boolean) {
-    val title = day.takeLast(2)
-    val locale = LocalConfiguration.current.locales[0]
-    val fill = when {
-        complete -> MaterialTheme.colorScheme.primary
-        protected -> MaterialTheme.colorScheme.tertiary
-        else -> MaterialTheme.colorScheme.surface
-    }
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(dayName(day, locale), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(7.dp))
-        Box(
-            Modifier
-                .size(32.dp)
-                .clip(CircleShape)
-                .background(fill)
-                .border(if (isToday) 2.dp else 1.dp, if (isToday) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outlineVariant, CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(title, color = if (complete || protected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
-        }
-    }
-}
-
-@Composable
-private fun MomentumCard(habit: Habit) {
-    val best = StreakCalculator.longestRun(habit.completionHistory, habit.debts)
-    val total = habit.completionHistory.distinct().size
-    Card(
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        modifier = Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(24.dp))
-    ) {
-        Row(Modifier.padding(18.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
-            Stat(stringResource(R.string.stat_best_run), best.toString())
-            Stat(stringResource(R.string.stat_check_ins), total.toString())
-            Stat(stringResource(R.string.stat_started), habit.startDate.takeLast(5).replace('-', '/'))
-        }
-    }
-}
-
-@Composable
-private fun HistoryDialog(
-    habit: Habit,
-    onDismiss: () -> Unit,
-    onPayDebt: (String) -> Unit = {},
-    onHaptic: () -> Unit
-) = AlertDialog(
-    onDismissRequest = onDismiss,
-    title = { Text(stringResource(R.string.history_title), fontWeight = FontWeight.ExtraBold) },
-    text = {
-        Column(
-            Modifier.verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            WeekCard(habit)
-            MomentumCard(habit)
-            if (habit.debts.isNotEmpty()) {
-                Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(
-                            stringResource(R.string.history_debts_title),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp
-                        )
-                        habit.debts.forEach { debtDate ->
-                            Row(
-                                Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(debtDate, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                                TextButton(
-                                    onClick = {
-                                        onHaptic()
-                                        onPayDebt(debtDate)
-                                    }
-                                ) {
-                                    Text(stringResource(R.string.debt_pay))
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            Text(
-                stringResource(R.string.history_explainer),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 12.sp
-            )
-        }
-    },
-    confirmButton = {
-        TextButton(onClick = { onHaptic(); onDismiss() }) { Text(stringResource(R.string.common_close)) }
-    }
-)
-
-@Composable
 private fun NotesDialog(
     habit: Habit,
     onDismiss: () -> Unit,
@@ -1424,12 +1228,6 @@ private fun NotesDialog(
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_close)) } }
     )
-}
-
-@Composable
-private fun Stat(label: String, value: String) = Column(horizontalAlignment = Alignment.CenterHorizontally) {
-    Text(value, color = MaterialTheme.colorScheme.onSurface, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold)
-    Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp, fontWeight = FontWeight.Medium)
 }
 
 @Composable
@@ -2280,6 +2078,3 @@ private fun TodoTaskRow(item: TodoItem, completed: Boolean, onClick: () -> Unit)
 
 private fun Habit.accent(): Color = runCatching { Color(android.graphics.Color.parseColor(colorHex)) }.getOrDefault(GoalPalette.options.first().color)
 private fun Color.hex(): String = String.format("#%06X", 0xFFFFFF and toArgb())
-private fun dayName(value: String, locale: Locale): String = runCatching {
-    SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(value)?.let { SimpleDateFormat("EE", locale).format(it) } ?: ""
-}.getOrDefault("")

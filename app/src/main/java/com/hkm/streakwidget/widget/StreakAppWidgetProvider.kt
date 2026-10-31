@@ -181,9 +181,13 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
         views.setTextViewText(R.id.widget_check_in, state.actionLabel)
 
         val showsDetail = style == WidgetStyle.FOCUS || style == WidgetStyle.CHECKLIST
-        val showsEyebrow = showsDetail && size != WidgetSize.COMPACT && size != WidgetSize.SQUARE
-        val showsProgress = style == WidgetStyle.CHECKLIST && state.taskProgress != null
-        val showsStatus = showsDetail && !showsProgress && size != WidgetSize.COMPACT
+        val showsEyebrow = showsDetail && (size == WidgetSize.WIDE || size == WidgetSize.HERO)
+        val showsProgress = style == WidgetStyle.CHECKLIST &&
+            state.taskProgress != null &&
+            (size == WidgetSize.COMPACT || size == WidgetSize.WIDE || size == WidgetSize.SQUARE ||
+                size == WidgetSize.HERO)
+        val showsStatus = showsDetail && !showsProgress &&
+            (size == WidgetSize.WIDE || size == WidgetSize.HERO || size == WidgetSize.SQUARE)
         val showsAction = style != WidgetStyle.EMBER
         views.setViewVisibility(R.id.widget_eyebrow, if (showsEyebrow) View.VISIBLE else View.GONE)
         views.setViewVisibility(R.id.widget_habit_name, if (showsDetail) View.VISIBLE else View.GONE)
@@ -394,8 +398,10 @@ private fun localizedWidgetLabels(resources: Resources): WidgetLabels = WidgetLa
 private fun WidgetSize.layoutRes(): Int = when (this) {
     WidgetSize.TILE -> R.layout.widget_layout_tile
     WidgetSize.STRIP -> R.layout.widget_layout_strip
+    WidgetSize.TALL -> R.layout.widget_layout_tall
     WidgetSize.COMPACT -> R.layout.widget_layout_compact
     WidgetSize.SQUARE -> R.layout.widget_layout_square
     WidgetSize.WIDE -> R.layout.widget_layout_wide
+    WidgetSize.TALL_HERO -> R.layout.widget_layout_tall_hero
     WidgetSize.HERO -> R.layout.widget_layout_hero
 }

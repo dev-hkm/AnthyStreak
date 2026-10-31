@@ -74,8 +74,8 @@ class WidgetRenderStateTest {
 
         assertEquals(WidgetVisualState.COMPLETED, state.visualState)
         assertEquals(2, state.streak)
-        assertEquals("TODAY SECURED", state.status)
-        assertEquals("TODAY SECURED", state.actionLabel)
+        assertEquals("DONE", state.status)
+        assertEquals("DONE", state.actionLabel)
         assertEquals(WidgetPrimaryAction.OPEN_APP, state.primaryAction)
         assertTrue(state.isCompleted)
     }

@@ -10,21 +10,30 @@ import org.junit.Test
 
 class WidgetLayoutSpecTest {
     @Test
-    fun `classifier exposes all six exact responsive buckets`() {
+    fun `classifier exposes all eight exact responsive buckets`() {
         assertEquals(WidgetSize.TILE, WidgetLayoutSpec.classify(56, 56))
         assertEquals(WidgetSize.STRIP, WidgetLayoutSpec.classify(112, 48))
+        assertEquals(WidgetSize.TALL, WidgetLayoutSpec.classify(72, 200))
         assertEquals(WidgetSize.COMPACT, WidgetLayoutSpec.classify(112, 88))
-        assertEquals(WidgetSize.SQUARE, WidgetLayoutSpec.classify(112, 168))
         assertEquals(WidgetSize.WIDE, WidgetLayoutSpec.classify(240, 88))
+        assertEquals(WidgetSize.SQUARE, WidgetLayoutSpec.classify(112, 120))
+        assertEquals(WidgetSize.TALL_HERO, WidgetLayoutSpec.classify(112, 168))
         assertEquals(WidgetSize.HERO, WidgetLayoutSpec.classify(240, 168))
     }
 
     @Test
     fun `classifier handles tall and wide dimensions independently`() {
-        assertEquals(WidgetSize.SQUARE, WidgetLayoutSpec.classify(112, 240))
+        assertEquals(WidgetSize.TALL_HERO, WidgetLayoutSpec.classify(112, 240))
         assertEquals(WidgetSize.WIDE, WidgetLayoutSpec.classify(320, 88))
         assertEquals(WidgetSize.STRIP, WidgetLayoutSpec.classify(240, 60))
-        assertEquals(WidgetSize.TILE, WidgetLayoutSpec.classify(72, 200))
+        assertEquals(WidgetSize.TALL, WidgetLayoutSpec.classify(72, 96))
+        assertEquals(WidgetSize.TILE, WidgetLayoutSpec.classify(72, 64))
+    }
+
+    @Test
+    fun `responsive variants cover every bucket once`() {
+        assertEquals(WidgetSize.entries.toSet(), WidgetLayoutSpec.responsiveSizes.toSet())
+        assertEquals(WidgetSize.entries.size, WidgetLayoutSpec.responsiveSizes.size)
     }
 
     @Test

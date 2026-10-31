@@ -19,6 +19,8 @@
     <string name="cd_remove_task">Xóa việc</string>
     <string name="cd_delete_note">Xóa ghi chú</string>
     <string name="cd_open_tasks">Mở việc hôm nay</string>
+    <string name="cd_dock_rescue">Mở ngày cứu chuỗi</string>
+    <string name="cd_dock_notes">Mở ghi chú chuỗi</string>
     <string name="cd_color">Màu %1$s</string>
     <string name="cd_theme">Giao diện %1$s</string>
     <string name="cd_format">Định dạng %1$s</string>
@@ -47,17 +49,8 @@
         <item quantity="one">ngày liên tiếp</item>
         <item quantity="other">ngày liên tiếp</item>
     </plurals>
-    <string name="today_claim_banner">Có một ngày bị lỡ. Giữ chuỗi streak của bạn (%1$d).</string>
-    <plurals name="today_debt_badge">
-        <item quantity="one">Đang nợ %1$d ngày · chạm để quản lý</item>
-        <item quantity="other">Đang nợ %1$d ngày · chạm để quản lý</item>
-    </plurals>
-    <string name="today_tasks_shortcut">%1$d trên %2$d việc</string>
     <string name="today_lighting">Đang thắp lửa streak</string>
     <string name="today_nurturing">Đang chăm cây bonsai</string>
-    <string name="today_view_progress">Xem tiến độ</string>
-    <string name="today_add_note">Thêm ghi chú</string>
-    <string name="today_notes_count">Ghi chú (%1$d)</string>
     <string name="today_check_in">Điểm danh</string>
     <string name="today_undo_check_in">Bỏ điểm danh</string>
     <string name="today_empty_title">Bắt đầu với một lời hứa.</string>
@@ -66,7 +59,6 @@
     <string name="today_pause_today">Tạm nghỉ hôm nay</string>
     <string name="today_resume_today">Tiếp tục hôm nay</string>
     <string name="today_paused_title">Đang tạm nghỉ</string>
-    <string name="today_paused_body">Hôm nay bạn được nghỉ. Chuỗi streak vẫn an toàn.</string>
     <string name="today_next_milestone">Mốc tiếp theo: %1$d ngày</string>
 
     <!-- Goal row -->
@@ -90,14 +82,6 @@
     <string name="debt_manage_body">Bạn đang giữ %1$d ngày. Mỗi ngày giúp chuỗi streak sống tiếp, kèm một lời nhắc nhẹ mỗi ngày cho đến khi bạn trả lại.</string>
     <string name="debt_unpaid">Chưa trả</string>
     <string name="debt_pay">Trả lại</string>
-    <string name="history_title">Tiến độ của bạn</string>
-    <string name="history_week">TUẦN NÀY</string>
-    <string name="history_debt_badge">CỨU STREAK</string>
-    <string name="history_debts_title">Ngày cứu đang mở</string>
-    <string name="history_explainer">Hai ngày bị lỡ được tự động giữ hộ. Sau đó, bạn có thể chọn giữ một ngày và trả lại sau. Ngày đã trả lại sẽ thành một lần điểm danh bình thường.</string>
-    <string name="stat_best_run">Chuỗi dài nhất</string>
-    <string name="stat_check_ins">Lần điểm danh</string>
-    <string name="stat_started">Bắt đầu</string>
 
     <!-- Notes -->
     <string name="notes_title">Ghi chú streak</string>
@@ -291,7 +275,7 @@
     <string name="widget_empty_status">MỖI LẦN MỘT LỜI HỨA</string>
     <string name="widget_create_goal">TẠO MỤC TIÊU</string>
     <string name="widget_ready">SẴN SÀNG HÔM NAY</string>
-    <string name="widget_secured">HÔM NAY ĐÃ XONG</string>
+    <string name="widget_secured">XONG</string>
     <string name="widget_check_in">ĐIỂM DANH</string>
     <string name="widget_paused">ĐANG NGHỈ</string>
     <string name="widget_open">MỞ</string>

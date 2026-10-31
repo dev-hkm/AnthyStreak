@@ -31,7 +31,7 @@ internal data class WidgetLabels(
     val emptyStatus: String = "ONE PROMISE AT A TIME",
     val createGoal: String = "CREATE GOAL",
     val ready: String = "READY TODAY",
-    val secured: String = "TODAY SECURED",
+    val secured: String = "DONE",
     val checkIn: String = "CHECK IN",
     val paused: String = "ON BREAK",
     val open: String = "OPEN",

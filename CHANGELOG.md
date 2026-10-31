@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.1 — 2026-10-31
+
+### Changed
+- Widget adapts to any launcher frame: added tall and portrait variants, and every layout now stretches with the resize frame instead of leaving empty bands.
+- Larger minimum-size flame: the flame and count now share the compact tile so the ember stays dominant when cropped to the smallest cell.
+- Shortened the completed status to a single word: DONE in English, XONG in Vietnamese.
+- Simplified the Today screen: pause, rescue days, tasks, notes, and progress now live in one compact control dock under the streak, and the duplicate progress/note text links are gone.
+
 ## 1.6.0 — 2026-10-31
 
 ### Added
