@@ -95,6 +95,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
@@ -111,6 +112,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.hkm.streakwidget.R
@@ -661,14 +663,14 @@ private fun TodayScreen(
                     }
                 }
             }
-            IconButton(onClick = onSettings, modifier = Modifier.size(46.dp)) {
-                Icon(
-                    imageVector = AppIcons.Gear,
-                    contentDescription = stringResource(R.string.cd_settings),
-                    tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(21.dp)
-                )
-            }
+            PlainIconButton(
+                icon = AppIcons.Gear,
+                contentDescription = stringResource(R.string.cd_settings),
+                onClick = onSettings,
+                tint = MaterialTheme.colorScheme.onSurface,
+                size = 46.dp,
+                iconSize = 21.dp
+            )
         }
     }
 }
@@ -806,38 +808,56 @@ private fun FocusCard(
             }
             AnimatedVisibility(
                 visible = expanded,
-                enter = fadeIn(tween(170)) + expandVertically(
-                    animationSpec = spring(dampingRatio = 0.82f, stiffness = Spring.StiffnessMediumLow),
+                enter = expandVertically(
+                    animationSpec = spring(dampingRatio = 0.95f, stiffness = Spring.StiffnessLow),
                     expandFrom = Alignment.Bottom
                 ),
-                exit = fadeOut(tween(110)) + shrinkVertically(tween(150), shrinkTowards = Alignment.Bottom)
-            ) {
-                FocusActions(
-                    habit = habit,
-                    paused = paused,
-                    onTogglePause = { choose { onTogglePause(paused) } },
-                    onRescue = { choose(onRescue) },
-                    onOpenTodos = { choose(onOpenTodos) },
-                    onNotes = { choose(onNotes) },
-                    onInsights = { choose(onInsights) }
+                exit = shrinkVertically(
+                    animationSpec = spring(dampingRatio = 1f, stiffness = Spring.StiffnessLow),
+                    shrinkTowards = Alignment.Bottom
                 )
+            ) {
+                val silk = remember { Animatable(0f) }
+                LaunchedEffect(expanded) {
+                    silk.animateTo(
+                        targetValue = if (expanded) 1f else 0f,
+                        animationSpec = spring(dampingRatio = 0.86f, stiffness = Spring.StiffnessLow)
+                    )
+                }
+                Box(
+                    Modifier.graphicsLayer {
+                        transformOrigin = TransformOrigin(0.5f, 1f)
+                        val p = silk.value.coerceIn(0f, 1f)
+                        alpha = p
+                        scaleX = 0.95f + 0.05f * p
+                        scaleY = 0.88f + 0.12f * p
+                        translationY = (1f - p) * 18.dp.toPx()
+                    }
+                ) {
+                    FocusActions(
+                        habit = habit,
+                        paused = paused,
+                        onTogglePause = { choose { onTogglePause(paused) } },
+                        onRescue = { choose(onRescue) },
+                        onOpenTodos = { choose(onOpenTodos) },
+                        onNotes = { choose(onNotes) },
+                        onInsights = { choose(onInsights) }
+                    )
+                }
             }
-            IconButton(
+            PlainIconButton(
+                icon = if (expanded) AppIcons.X else AppIcons.Sliders,
+                contentDescription = stringResource(
+                    if (expanded) R.string.cd_close_menu else R.string.cd_more_options
+                ),
                 onClick = {
                     expanded = !expanded
                     if (expanded) onHaptic()
                 },
-                modifier = Modifier.size(42.dp)
-            ) {
-                Icon(
-                    imageVector = if (expanded) AppIcons.X else AppIcons.Sliders,
-                    contentDescription = stringResource(
-                        if (expanded) R.string.cd_close_menu else R.string.cd_more_options
-                    ),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(19.dp)
-                )
-            }
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                size = 42.dp,
+                iconSize = 19.dp
+            )
             Spacer(Modifier.height(4.dp))
             Button(
                 onClick = {
@@ -862,6 +882,37 @@ private fun FocusCard(
 }
 
 @Composable
+private fun PlainIconButton(
+    icon: ImageVector,
+    contentDescription: String,
+    onClick: () -> Unit,
+    tint: Color,
+    size: Dp,
+    iconSize: Dp
+) {
+    val interaction = remember { MutableInteractionSource() }
+    Box(
+        Modifier
+            .size(size)
+            .clip(CircleShape)
+            .clickable(
+                interactionSource = interaction,
+                indication = null,
+                role = Role.Button,
+                onClick = onClick
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            icon,
+            contentDescription = contentDescription,
+            tint = tint,
+            modifier = Modifier.size(iconSize)
+        )
+    }
+}
+
+@Composable
 private fun FocusActions(
     habit: Habit,
     paused: Boolean,
@@ -876,27 +927,47 @@ private fun FocusActions(
     val doneTodos = habit.todoItems.count { it.isCompletedOn(today) }
     val unclaimed = habit.unclaimedMissedDates(today).size
     val rescueCount = unclaimed + habit.debts.size
+    val hasRescue = rescueCount > 0
+
+    var nextIndex = 2
+    val todosIndex = if (hasTodos) nextIndex++ else -1
+    val rescueIndex = if (hasRescue) nextIndex++ else -1
+    val pauseIndex = nextIndex
+    val reveal = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        reveal.animateTo(1f, tween(durationMillis = 520, easing = FastOutSlowInEasing))
+    }
+    // Rows lift off the trigger first, so the panel unfolds from its anchor like cloth.
+    val silkRow: (Int) -> Modifier = { index ->
+        Modifier.graphicsLayer {
+            val p = ((reveal.value - index * 0.1f) / 0.55f).coerceIn(0f, 1f)
+            alpha = p
+            translationY = (1f - p) * 12.dp.toPx()
+        }
+    }
 
     Column(
         Modifier
             .widthIn(max = 236.dp)
             .clip(RoundedCornerShape(22.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f))
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
             .padding(6.dp)
     ) {
         FocusActionRow(
             icon = if (paused) AppIcons.Play else AppIcons.Pause,
             label = stringResource(if (paused) R.string.today_resume_today else R.string.today_pause_today),
             status = if (paused) stringResource(R.string.today_paused_title) else null,
-            onClick = onTogglePause
+            onClick = onTogglePause,
+            modifier = silkRow(pauseIndex)
         )
-        if (rescueCount > 0) {
+        if (hasRescue) {
             FocusActionRow(
                 icon = AppIcons.Shield,
                 label = stringResource(R.string.debt_manage_title),
                 status = pluralStringResource(R.plurals.sheet_rescue_days, rescueCount, rescueCount),
                 accent = unclaimed > 0,
-                onClick = onRescue
+                onClick = onRescue,
+                modifier = silkRow(rescueIndex)
             )
         }
         if (hasTodos) {
@@ -904,7 +975,8 @@ private fun FocusActions(
                 icon = AppIcons.ListChecks,
                 label = stringResource(R.string.sheet_tasks),
                 status = stringResource(R.string.sheet_tasks_progress, doneTodos, habit.todoItems.size),
-                onClick = onOpenTodos
+                onClick = onOpenTodos,
+                modifier = silkRow(todosIndex)
             )
         }
         FocusActionRow(
@@ -915,13 +987,15 @@ private fun FocusActions(
             } else {
                 pluralStringResource(R.plurals.sheet_notes_count, habit.notes.size, habit.notes.size)
             },
-            onClick = onNotes
+            onClick = onNotes,
+            modifier = silkRow(1)
         )
         FocusActionRow(
             icon = AppIcons.Chart,
             label = stringResource(R.string.insights_title),
             chevron = true,
-            onClick = onInsights
+            onClick = onInsights,
+            modifier = silkRow(0)
         )
     }
 }
@@ -933,11 +1007,12 @@ private fun FocusActionRow(
     onClick: () -> Unit,
     status: String? = null,
     accent: Boolean = false,
-    chevron: Boolean = false
+    chevron: Boolean = false,
+    modifier: Modifier = Modifier
 ) {
     val tint = if (accent) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
     Row(
-        Modifier
+        modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)

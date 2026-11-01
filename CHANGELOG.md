@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.4 — 2026-11-01
+
+### Changed
+- Removed the ripple flash from the options trigger and the header settings icon; both are now plain icons that respond without an overlay.
+- The goal options panel is fully opaque instead of translucent.
+- Opening and closing the panel now glide like cloth: the sheet unfolds from the trigger, its rows lift in from the bottom in a soft cascade, and closing shrinks and fades it back into the button.
+
 ## 1.6.3 — 2026-11-01
 
 ### Changed
