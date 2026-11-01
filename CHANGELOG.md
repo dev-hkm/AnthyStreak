@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.6 — 2026-11-01
+
+### Changed
+- Restored the launcher widget implementation, layouts, styles, and flame assets from checkpoint `9040dc2`; all non-widget app changes remain intact.
+
 ## 1.6.5 — 2026-11-01
 
 ### Changed

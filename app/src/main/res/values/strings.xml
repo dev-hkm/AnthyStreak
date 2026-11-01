@@ -278,6 +278,8 @@
     <string name="widget_preview_goal">Your daily promise</string>
     <string name="widget_preview_status">READY FOR TODAY</string>
     <string name="widget_preview_check_in">CHECK IN</string>
+    <string name="widget_eyebrow_today">TODAY</string>
+    <string name="widget_eyebrow_empty">WIDGET</string>
     <plurals name="widget_days">
         <item quantity="one">DAY</item>
         <item quantity="other">DAYS</item>

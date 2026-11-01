@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 110 x 75dp minimum: flame, count and one detail line share the row without clipping. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_bg_shape"
+    android:padding="5dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <FrameLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1.15">
+            <ImageView android:id="@+id/widget_flame_glow" android:layout_width="match_parent" android:layout_height="match_parent" android:contentDescription="@null" android:scaleType="fitCenter" android:src="@drawable/widget_flame_glow" />
+            <ImageView android:id="@+id/widget_flame_outer" android:layout_width="match_parent" android:layout_height="match_parent" android:contentDescription="@null" android:scaleType="fitCenter" android:src="@drawable/ic_widget_flame_outer" />
+            <ImageView android:id="@+id/widget_flame_mid" android:layout_width="match_parent" android:layout_height="match_parent" android:contentDescription="@null" android:padding="7dp" android:scaleType="fitCenter" android:src="@drawable/ic_widget_flame_mid" />
+            <ImageView android:id="@+id/widget_flame_inner" android:layout_width="match_parent" android:layout_height="match_parent" android:contentDescription="@null" android:padding="13dp" android:scaleType="fitCenter" android:src="@drawable/ic_widget_flame_inner" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="3dp"
+            android:layout_weight="0.85"
+            android:gravity="center"
+            android:orientation="vertical">
+            <TextView android:id="@+id/widget_streak_count" style="@style/WidgetText" android:layout_width="match_parent" android:layout_height="wrap_content" android:autoSizeTextType="uniform" android:autoSizeMinTextSize="11sp" android:autoSizeMaxTextSize="21sp" android:autoSizeStepGranularity="1sp" android:gravity="center" android:includeFontPadding="false" android:maxLines="1" android:text="@string/widget_preview_count" android:textColor="@color/widget_text_primary" android:textSize="21sp" android:textStyle="bold" />
+            <TextView android:id="@+id/widget_streak_label" style="@style/WidgetText" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:includeFontPadding="false" android:maxLines="1" android:text="@string/widget_preview_days" android:textColor="@color/widget_text_muted" android:textSize="6sp" android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="5dp"
+            android:layout_weight="2.2"
+            android:gravity="center_vertical"
+            android:orientation="vertical">
+
+            <TextView android:id="@+id/widget_eyebrow" style="@style/WidgetText" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
+            <TextView android:id="@+id/widget_habit_name" style="@style/WidgetText" android:layout_width="match_parent" android:layout_height="wrap_content" android:autoSizeTextType="uniform" android:autoSizeMinTextSize="10sp" android:autoSizeMaxTextSize="14sp" android:autoSizeStepGranularity="1sp" android:ellipsize="end" android:includeFontPadding="false" android:maxLines="1" android:text="@string/widget_preview_goal" android:textColor="@color/widget_text_primary" android:textSize="14sp" android:textStyle="bold" />
+            <TextView android:id="@+id/widget_status" style="@style/WidgetText" android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:includeFontPadding="false" android:maxLines="1" android:text="@string/widget_preview_status" android:textColor="@color/widget_text_muted" android:textSize="7sp" android:textStyle="bold" />
+            <TextView android:id="@+id/widget_task_progress" style="@style/WidgetText" android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:includeFontPadding="false" android:maxLines="1" android:textColor="@color/widget_text_muted" android:textSize="7sp" android:textStyle="bold" android:visibility="gone" />
+            <TextView android:id="@+id/widget_check_in" style="@style/WidgetText" android:layout_width="match_parent" android:layout_height="22dp" android:layout_marginTop="2dp" android:autoSizeTextType="uniform" android:autoSizeMinTextSize="6sp" android:autoSizeMaxTextSize="9sp" android:autoSizeStepGranularity="1sp" android:background="@drawable/widget_action_shape" android:gravity="center" android:includeFontPadding="false" android:maxLines="1" android:text="@string/widget_preview_check_in" android:textColor="@color/widget_action_text" android:textSize="9sp" android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

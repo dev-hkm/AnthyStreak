@@ -276,6 +276,8 @@
     <string name="widget_preview_goal">Lời hứa hằng ngày</string>
     <string name="widget_preview_status">SẴN SÀNG HÔM NAY</string>
     <string name="widget_preview_check_in">ĐIỂM DANH</string>
+    <string name="widget_eyebrow_today">HÔM NAY</string>
+    <string name="widget_eyebrow_empty">WIDGET</string>
     <plurals name="widget_days">
         <item quantity="one">NGÀY</item>
         <item quantity="other">NGÀY</item>

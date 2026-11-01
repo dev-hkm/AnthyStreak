@@ -10,146 +10,51 @@ import org.junit.Test
 
 class WidgetLayoutSpecTest {
     @Test
-    fun `the smallest system frame keeps only the ember and the number`() {
-        val plan = plan(40, 40)
-        assertEquals(WidgetStructure.MINI, plan.structure)
-        assertFalse(plan.showLabel)
-        assertFalse(plan.showName)
-        assertFalse(plan.showStatus)
-        assertFalse(plan.showAction)
-        assertTrue(plan.compactCorners)
-        assertTrue(plan.countSp in 9f..24f)
+    fun `classifier exposes all eight exact responsive buckets`() {
+        assertEquals(WidgetSize.TILE, WidgetLayoutSpec.classify(56, 56))
+        assertEquals(WidgetSize.STRIP, WidgetLayoutSpec.classify(112, 48))
+        assertEquals(WidgetSize.TALL, WidgetLayoutSpec.classify(72, 200))
+        assertEquals(WidgetSize.COMPACT, WidgetLayoutSpec.classify(112, 88))
+        assertEquals(WidgetSize.WIDE, WidgetLayoutSpec.classify(240, 88))
+        assertEquals(WidgetSize.SQUARE, WidgetLayoutSpec.classify(112, 120))
+        assertEquals(WidgetSize.TALL_HERO, WidgetLayoutSpec.classify(112, 168))
+        assertEquals(WidgetSize.HERO, WidgetLayoutSpec.classify(240, 168))
     }
 
     @Test
-    fun `one home screen cell stays minimal`() {
-        assertEquals(WidgetStructure.MINI, plan(56, 48).structure)
-        assertEquals(WidgetStructure.MINI, plan(72, 64).structure)
+    fun `classifier handles tall and wide dimensions independently`() {
+        assertEquals(WidgetSize.TALL_HERO, WidgetLayoutSpec.classify(112, 240))
+        assertEquals(WidgetSize.WIDE, WidgetLayoutSpec.classify(320, 88))
+        assertEquals(WidgetSize.STRIP, WidgetLayoutSpec.classify(240, 60))
+        assertEquals(WidgetSize.TALL, WidgetLayoutSpec.classify(72, 96))
+        assertEquals(WidgetSize.TILE, WidgetLayoutSpec.classify(72, 64))
     }
 
     @Test
-    fun `landscape frames use the row structure`() {
-        assertEquals(WidgetStructure.ROW, plan(240, 110).structure)
-        assertEquals(WidgetStructure.ROW, plan(180, 64).structure)
-        assertEquals(WidgetStructure.ROW, plan(320, 110).structure)
+    fun `responsive variants cover every bucket once`() {
+        assertEquals(WidgetSize.entries.toSet(), WidgetLayoutSpec.responsiveSizes.toSet())
+        assertEquals(WidgetSize.entries.size, WidgetLayoutSpec.responsiveSizes.size)
     }
 
     @Test
-    fun `narrow tall frames use the column structure`() {
-        assertEquals(WidgetStructure.COLUMN, plan(110, 160).structure)
-        assertEquals(WidgetStructure.COLUMN, plan(72, 200).structure)
-        assertEquals(WidgetStructure.COLUMN, plan(110, 240).structure)
+    fun `missing launcher dimensions use a useful compact fallback`() {
+        assertEquals(WidgetSize.COMPACT, WidgetLayoutSpec.classify(0, 0))
     }
 
     @Test
-    fun `square frames use the stacked structure`() {
-        assertEquals(WidgetStructure.STACK, plan(110, 110).structure)
-        assertEquals(WidgetStructure.STACK, plan(56, 80).structure)
-        assertEquals(WidgetStructure.STACK, plan(160, 160).structure)
+    fun `poster selection falls back to ember for sizes without a detail hierarchy`() {
+        assertEquals(WidgetStyle.EMBER, resolvedStyle(WidgetSize.TILE, WidgetStyle.POSTER, hasChecklist = false))
+        assertEquals(WidgetStyle.EMBER, resolvedStyle(WidgetSize.STRIP, WidgetStyle.POSTER, hasChecklist = false))
+        assertEquals(WidgetStyle.POSTER, resolvedStyle(WidgetSize.WIDE, WidgetStyle.POSTER, hasChecklist = false))
+        assertEquals(WidgetStyle.POSTER, resolvedStyle(WidgetSize.HERO, WidgetStyle.POSTER, hasChecklist = false))
     }
 
     @Test
-    fun `detail appears only when the frame can hold it`() {
-        val wide = plan(240, 110)
-        assertTrue(wide.showName)
-        assertTrue(wide.showStatus)
-        assertTrue(wide.showAction)
-
-        val shortRow = plan(180, 64)
-        assertTrue(shortRow.showLabel)
-        assertTrue(shortRow.showName)
-        assertTrue(shortRow.showAction)
-
-        val smallStack = plan(56, 80)
-        assertTrue(smallStack.showName)
-        assertFalse(smallStack.showStatus)
-        assertFalse(smallStack.showAction)
-
-        val square = plan(110, 110)
-        assertTrue(square.showName)
-        assertTrue(square.showAction)
-        assertFalse(square.showStatus)
-
-        val tall = plan(110, 160)
-        assertTrue(tall.showName)
-        assertFalse(tall.showStatus)
-        assertFalse(tall.showAction)
-    }
-
-    @Test
-    fun `typography grows with the frame instead of jumping between buckets`() {
-        val tiny = plan(40, 40).countSp
-        val cell = plan(56, 48).countSp
-        val square = plan(110, 110).countSp
-        val hero = plan(240, 110).countSp
-        assertTrue(tiny < cell)
-        assertTrue(cell < square)
-        assertTrue(square < hero)
-    }
-
-    @Test
-    fun `long streak numbers shrink so they never overrun the frame`() {
-        val twoDigits = plan(110, 110, countDigits = 2).countSp
-        val threeDigits = plan(110, 110, countDigits = 3).countSp
-        val threeDigitRow = plan(110, 75, countDigits = 3).countSp
-        assertTrue(threeDigits < twoDigits)
-        assertTrue(threeDigitRow < plan(110, 75, countDigits = 2).countSp)
-    }
-
-    @Test
-    fun `every frame keeps readable text and a sane inset`() {
-        for (width in listOf(40, 56, 72, 110, 180, 240, 320)) {
-            for (height in listOf(40, 48, 64, 75, 96, 110, 160, 200, 240)) {
-                val plan = plan(width, height)
-                assertTrue("count at $width x $height", plan.countSp >= 9f)
-                assertTrue("label at $width x $height", plan.labelSp >= 6f)
-                assertTrue("name at $width x $height", plan.nameSp >= 8f)
-                assertTrue("padding at $width x $height", plan.paddingDp in 2..9)
-            }
-        }
-    }
-
-    @Test
-    fun `ember style keeps only the flame and the number`() {
-        val ember = plan(240, 110, style = WidgetStyle.EMBER)
-        assertFalse(ember.showAction)
-    }
-
-    @Test
-    fun `checklist progress needs a checklist to exist`() {
-        assertTrue(plan(240, 110, style = WidgetStyle.CHECKLIST, hasChecklist = true).showProgress)
-        assertFalse(plan(240, 110, style = WidgetStyle.CHECKLIST, hasChecklist = false).showProgress)
-    }
-
-    @Test
-    fun `missing launcher dimensions fall back to a useful card`() {
-        assertEquals(WidgetStructure.ROW, WidgetLayoutSpec.structureFor(0, 0))
-        assertEquals(plan(WidgetLayoutSpec.DEFAULT_WIDTH_DP, WidgetLayoutSpec.DEFAULT_HEIGHT_DP), plan(0, 0))
-    }
-
-    @Test
-    fun `exact launcher frames choose the current orientation`() {
-        val frames = listOf(WidgetFrame(110, 240), WidgetFrame(240, 110))
-        assertEquals(WidgetFrame(110, 240), WidgetLayoutSpec.closestFrame(frames, 110, 240))
-        assertEquals(WidgetFrame(240, 110), WidgetLayoutSpec.closestFrame(frames, 240, 110))
-        assertEquals(WidgetFrame(110, 240), WidgetLayoutSpec.closestFrame(frames, 112, 236))
-    }
-
-    @Test
-    fun `invalid launcher frames are ignored`() {
-        val valid = WidgetFrame(110, 110)
-        val frames = listOf(WidgetFrame(0, 100), WidgetFrame(-20, 80), valid)
-        assertEquals(valid, WidgetLayoutSpec.closestFrame(frames, 0, 0))
-        assertEquals(null, WidgetLayoutSpec.closestFrame(emptyList(), 110, 110))
-    }
-
-    @Test
-    fun `the tiny structure is always the ember`() {
-        assertEquals(WidgetStyle.EMBER, resolvedStyle(WidgetStructure.MINI, WidgetStyle.POSTER, hasChecklist = false))
-        assertEquals(WidgetStyle.POSTER, resolvedStyle(WidgetStructure.ROW, WidgetStyle.POSTER, hasChecklist = false))
-        assertEquals(WidgetStyle.POSTER, resolvedStyle(WidgetStructure.COLUMN, WidgetStyle.POSTER, hasChecklist = false))
-        assertEquals(WidgetStyle.FOCUS, resolvedStyle(WidgetStructure.STACK, WidgetStyle.CHECKLIST, hasChecklist = false))
-        assertEquals(WidgetStyle.CHECKLIST, resolvedStyle(WidgetStructure.STACK, WidgetStyle.CHECKLIST, hasChecklist = true))
+    fun `styles fall back only where their hierarchy cannot be rendered`() {
+        assertEquals(WidgetStyle.POSTER, resolvedStyle(WidgetSize.SQUARE, WidgetStyle.POSTER, hasChecklist = false))
+        assertEquals(WidgetStyle.POSTER, resolvedStyle(WidgetSize.HERO, WidgetStyle.POSTER, hasChecklist = false))
+        assertEquals(WidgetStyle.FOCUS, resolvedStyle(WidgetSize.HERO, WidgetStyle.CHECKLIST, hasChecklist = false))
+        assertEquals(WidgetStyle.CHECKLIST, resolvedStyle(WidgetSize.HERO, WidgetStyle.CHECKLIST, hasChecklist = true))
     }
 
     @Test
@@ -190,14 +95,6 @@ class WidgetLayoutSpecTest {
         assertEquals(WidgetStyle.FOCUS, repository.getWidgetStyle(52))
         assertFalse(repository.isValidWidgetAction(52, "goal", token))
     }
-
-    private fun plan(
-        width: Int,
-        height: Int,
-        style: WidgetStyle = WidgetStyle.FOCUS,
-        hasChecklist: Boolean = false,
-        countDigits: Int = 2
-    ): WidgetPlan = WidgetLayoutSpec.plan(width, height, style, hasChecklist, countDigits)
 
     private fun memoryPreferences(): SharedPreferences {
         val values = linkedMapOf<String, Any?>()

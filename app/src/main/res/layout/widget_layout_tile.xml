@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 56 x 48dp minimum: a dominant flame with the count tucked beside it. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_bg_shape"
+    android:padding="3dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <FrameLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1.35">
+
+            <ImageView android:id="@+id/widget_flame_glow" android:layout_width="match_parent" android:layout_height="match_parent" android:contentDescription="@null" android:scaleType="fitCenter" android:src="@drawable/widget_flame_glow" />
+            <ImageView android:id="@+id/widget_flame_outer" android:layout_width="match_parent" android:layout_height="match_parent" android:contentDescription="@null" android:scaleType="fitCenter" android:src="@drawable/ic_widget_flame_outer" />
+            <ImageView android:id="@+id/widget_flame_mid" android:layout_width="match_parent" android:layout_height="match_parent" android:contentDescription="@null" android:padding="6dp" android:scaleType="fitCenter" android:src="@drawable/ic_widget_flame_mid" />
+            <ImageView android:id="@+id/widget_flame_inner" android:layout_width="match_parent" android:layout_height="match_parent" android:contentDescription="@null" android:padding="11dp" android:scaleType="fitCenter" android:src="@drawable/ic_widget_flame_inner" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/widget_streak_count"
+                style="@style/WidgetText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:autoSizeTextType="uniform"
+                android:autoSizeMinTextSize="9sp"
+                android:autoSizeMaxTextSize="16sp"
+                android:autoSizeStepGranularity="1sp"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:text="@string/widget_preview_count"
+                android:textColor="@color/widget_text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/widget_streak_label"
+                style="@style/WidgetText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:text="@string/widget_preview_days"
+                android:textColor="@color/widget_text_muted"
+                android:textSize="6sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView android:id="@+id/widget_eyebrow" style="@style/WidgetText" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
+    <TextView android:id="@+id/widget_habit_name" style="@style/WidgetText" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
+    <TextView android:id="@+id/widget_status" style="@style/WidgetText" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
+    <TextView android:id="@+id/widget_task_progress" style="@style/WidgetText" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
+    <TextView android:id="@+id/widget_check_in" style="@style/WidgetText" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
+</FrameLayout>
