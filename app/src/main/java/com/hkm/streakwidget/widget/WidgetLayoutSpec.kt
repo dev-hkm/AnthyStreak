@@ -1,5 +1,6 @@
 package com.hkm.streakwidget.widget
 
+import kotlin.math.abs
 import kotlin.math.min
 import kotlin.math.roundToInt
 
@@ -45,9 +46,20 @@ internal data class WidgetPlan(
     val actionVerticalPaddingDp: Int
 )
 
+/** One exact launcher frame in dp. */
+internal data class WidgetFrame(val widthDp: Int, val heightDp: Int)
+
 internal object WidgetLayoutSpec {
     const val DEFAULT_WIDTH_DP = 110
     const val DEFAULT_HEIGHT_DP = 75
+
+    fun closestFrame(frames: List<WidgetFrame>, widthDp: Int, heightDp: Int): WidgetFrame? {
+        val width = normalized(widthDp, DEFAULT_WIDTH_DP)
+        val height = normalized(heightDp, DEFAULT_HEIGHT_DP)
+        return frames
+            .filter { it.widthDp in 1..2000 && it.heightDp in 1..2000 }
+            .minByOrNull { abs(it.widthDp - width) + abs(it.heightDp - height) }
+    }
 
     fun structureFor(widthDp: Int, heightDp: Int): WidgetStructure {
         val width = normalized(widthDp, DEFAULT_WIDTH_DP)
@@ -101,10 +113,10 @@ internal object WidgetLayoutSpec {
 
             WidgetStructure.ROW -> {
                 val padding = (height * 0.07f).roundToInt().coerceIn(3, 7)
-                val showAction = style != WidgetStyle.EMBER && width >= 128 && height >= 58
-                val showName = showsDetail && width >= 132 && height >= 72
-                val showStatus = showsDetail && width >= 150 && height >= 96
-                val showProgress = showsDetail && hasChecklist && width >= 150 && height >= 96
+                val showAction = style != WidgetStyle.EMBER && width >= 118 && height >= 52
+                val showName = showsDetail && width >= 124 && height >= 64
+                val showStatus = showsDetail && width >= 146 && height >= 88
+                val showProgress = showsDetail && hasChecklist && width >= 146 && height >= 88
                 val flameWidth = min(height.toFloat(), width * 0.34f).coerceAtLeast(26f)
                 val actionWidth = if (showAction) (height * 0.52f).coerceIn(42f, 72f) else 0f
                 val textWidth = (width - padding * 2 - flameWidth - actionWidth - 10f).coerceAtLeast(40f)
@@ -148,7 +160,7 @@ internal object WidgetLayoutSpec {
                     showStatus = showStatus,
                     showProgress = showProgress,
                     showAction = showAction,
-                    countSp = fitText(width * 0.34f, (width - padding * 2).toFloat(), digits, 16f, 40f),
+                    countSp = fitText(min(width * 0.34f, height * 0.20f), (width - padding * 2).toFloat(), digits, 16f, 44f),
                     labelSp = (width * 0.105f).coerceIn(6f, 12f),
                     nameSp = (width * 0.135f).coerceIn(9f, 15f),
                     statusSp = (width * 0.10f).coerceIn(7f, 11f),

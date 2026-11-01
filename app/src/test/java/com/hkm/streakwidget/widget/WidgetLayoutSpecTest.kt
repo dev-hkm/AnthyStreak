@@ -57,7 +57,7 @@ class WidgetLayoutSpecTest {
 
         val shortRow = plan(180, 64)
         assertTrue(shortRow.showLabel)
-        assertFalse(shortRow.showName)
+        assertTrue(shortRow.showName)
         assertTrue(shortRow.showAction)
 
         val smallStack = plan(56, 80)
@@ -125,6 +125,22 @@ class WidgetLayoutSpecTest {
     fun `missing launcher dimensions fall back to a useful card`() {
         assertEquals(WidgetStructure.ROW, WidgetLayoutSpec.structureFor(0, 0))
         assertEquals(plan(WidgetLayoutSpec.DEFAULT_WIDTH_DP, WidgetLayoutSpec.DEFAULT_HEIGHT_DP), plan(0, 0))
+    }
+
+    @Test
+    fun `exact launcher frames choose the current orientation`() {
+        val frames = listOf(WidgetFrame(110, 240), WidgetFrame(240, 110))
+        assertEquals(WidgetFrame(110, 240), WidgetLayoutSpec.closestFrame(frames, 110, 240))
+        assertEquals(WidgetFrame(240, 110), WidgetLayoutSpec.closestFrame(frames, 240, 110))
+        assertEquals(WidgetFrame(110, 240), WidgetLayoutSpec.closestFrame(frames, 112, 236))
+    }
+
+    @Test
+    fun `invalid launcher frames are ignored`() {
+        val valid = WidgetFrame(110, 110)
+        val frames = listOf(WidgetFrame(0, 100), WidgetFrame(-20, 80), valid)
+        assertEquals(valid, WidgetLayoutSpec.closestFrame(frames, 0, 0))
+        assertEquals(null, WidgetLayoutSpec.closestFrame(emptyList(), 110, 110))
     }
 
     @Test

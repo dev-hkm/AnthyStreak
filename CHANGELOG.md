@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.5 — 2026-11-01
+
+### Changed
+- Widget now reads the launcher's exact frame dimensions on Android 12+, choosing mini, row, column, or stack compositions for the real aspect ratio instead of relying only on approximate resize hints.
+- Wide and compact frames reveal more useful detail when space allows, while long streak numbers continue to shrink to fit.
+- Replaced the flat widget flame with a glowing, multi-layer gradient flame matching the in-app look; ignition keeps its full animation.
+- Removed the background outline that produced jagged or cut-looking widget corners.
+
 ## 1.6.4 — 2026-11-01
 
 ### Changed

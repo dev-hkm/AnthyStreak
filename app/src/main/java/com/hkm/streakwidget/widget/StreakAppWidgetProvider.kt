@@ -9,7 +9,9 @@ import android.content.Intent
 import android.content.res.Resources
 import android.graphics.Color
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.util.SizeF
 import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
@@ -98,9 +100,7 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
 
             val state = WidgetRenderStateFactory.create(habit, StreakCalculator.todayString(), labels)
             val views = createResponsiveViews(
-                context = context,
                 localizedContext = localizedContext,
-                labels = labels,
                 widgetId = widgetId,
                 options = manager.getAppWidgetOptions(widgetId),
                 habit = habit,
@@ -113,25 +113,48 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
     }
 
     private fun createResponsiveViews(
-        context: Context,
         localizedContext: Context,
-        labels: WidgetLabels,
         widgetId: Int,
         options: Bundle,
         habit: Habit?,
         state: WidgetRenderState,
         selectedStyle: WidgetStyle,
         repository: HabitRepository
-    ): RemoteViews = createViews(
-        context = localizedContext,
-        widgetId = widgetId,
-        widthDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0),
-        heightDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0),
-        habit = habit,
-        state = state,
-        selectedStyle = selectedStyle,
-        repository = repository
-    )
+    ): RemoteViews {
+        val openIntent = openAppIntent(localizedContext, widgetId, habit?.id)
+        val primaryIntent = if (state.primaryAction == WidgetPrimaryAction.CHECK_IN && habit != null) {
+            checkInIntent(localizedContext, repository, widgetId, habit.id)
+        } else {
+            openIntent
+        }
+        val frame = launcherFrame(options)
+
+        return createViews(
+            context = localizedContext,
+            widgetId = widgetId,
+            widthDp = frame.widthDp,
+            heightDp = frame.heightDp,
+            habit = habit,
+            state = state,
+            selectedStyle = selectedStyle,
+            openIntent = openIntent,
+            primaryIntent = primaryIntent
+        )
+    }
+
+    @Suppress("DEPRECATION")
+    private fun launcherFrame(options: Bundle): WidgetFrame {
+        val width = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0)
+        val height = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val frames = options.getParcelableArrayList<SizeF>(AppWidgetManager.OPTION_APPWIDGET_SIZES)
+                .orEmpty()
+                .filter { it.width.isFinite() && it.height.isFinite() }
+                .map { WidgetFrame(it.width.roundToInt(), it.height.roundToInt()) }
+            WidgetLayoutSpec.closestFrame(frames, width, height)?.let { return it }
+        }
+        return WidgetFrame(width, height)
+    }
 
     private fun createViews(
         context: Context,
@@ -141,7 +164,8 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
         habit: Habit?,
         state: WidgetRenderState,
         selectedStyle: WidgetStyle,
-        repository: HabitRepository
+        openIntent: PendingIntent,
+        primaryIntent: PendingIntent
     ): RemoteViews {
         val hasChecklist = habit?.isWidgetChecklistEligible() == true
         val structure = WidgetLayoutSpec.structureFor(widthDp, heightDp)
@@ -157,13 +181,11 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
         applyPlan(views, context, plan)
 
         val hasLitFlame = state.visualState != WidgetVisualState.EMPTY && (state.streak > 0 || state.isCompleted)
-        if (hasLitFlame) {
-            val accent = Color.parseColor(state.accentHex)
-            views.setInt(R.id.widget_flame_glow, "setColorFilter", accent)
-            views.setInt(R.id.widget_flame_outer, "setColorFilter", accent)
-            views.setInt(R.id.widget_flame_mid, "setColorFilter", lightenedAccent(accent))
-            views.setInt(R.id.widget_flame_inner, "setColorFilter", Color.WHITE)
-        }
+        val flame = WidgetFlameRenderer.layers(Color.parseColor(state.accentHex), hasLitFlame)
+        views.setImageViewBitmap(R.id.widget_flame_glow, flame.glow)
+        views.setImageViewBitmap(R.id.widget_flame_outer, flame.outer)
+        views.setImageViewBitmap(R.id.widget_flame_mid, flame.mid)
+        views.setImageViewBitmap(R.id.widget_flame_inner, flame.inner)
 
         views.setTextViewText(R.id.widget_streak_count, state.streak.toString())
         views.setTextViewText(R.id.widget_streak_label, state.streakLabel)
@@ -185,12 +207,6 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
             if (style != WidgetStyle.EMBER && plan.showAction) View.VISIBLE else View.GONE
         )
 
-        val openIntent = openAppIntent(context, widgetId, habit?.id)
-        val primaryIntent = if (state.primaryAction == WidgetPrimaryAction.CHECK_IN && habit != null) {
-            checkInIntent(context, repository, widgetId, habit.id)
-        } else {
-            openIntent
-        }
         views.setOnClickPendingIntent(R.id.widget_background, openIntent)
         views.setOnClickPendingIntent(R.id.widget_check_in, primaryIntent)
         views.setOnClickPendingIntent(R.id.widget_flame_outer, primaryIntent)
@@ -269,23 +285,23 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
 
     private fun playIgnitionFrames(context: Context, widgetId: Int, state: WidgetRenderState) {
         val manager = AppWidgetManager.getInstance(context)
-        val options = manager.getAppWidgetOptions(widgetId)
-        val structure = WidgetLayoutSpec.structureFor(
-            options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0),
-            options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0)
-        )
+        val frame = launcherFrame(manager.getAppWidgetOptions(widgetId))
+        val structure = WidgetLayoutSpec.structureFor(frame.widthDp, frame.heightDp)
         val accent = Color.parseColor(state.accentHex)
+        val flame = WidgetFlameRenderer.layers(accent, lit = true)
         var elapsed = 0L
-        for (frame in WidgetIgnitionSequence.frames()) {
+        WidgetIgnitionSequence.frames().forEachIndexed { index, frame ->
             val waitMillis = frame.atMillis - elapsed
             if (waitMillis > 0L) Thread.sleep(waitMillis)
             elapsed = frame.atMillis
 
             val partial = RemoteViews(context.packageName, structure.layoutRes()).apply {
-                setInt(R.id.widget_flame_glow, "setColorFilter", accent)
-                setInt(R.id.widget_flame_outer, "setColorFilter", accent)
-                setInt(R.id.widget_flame_mid, "setColorFilter", lightenedAccent(accent))
-                setInt(R.id.widget_flame_inner, "setColorFilter", Color.WHITE)
+                if (index == 0) {
+                    setImageViewBitmap(R.id.widget_flame_glow, flame.glow)
+                    setImageViewBitmap(R.id.widget_flame_outer, flame.outer)
+                    setImageViewBitmap(R.id.widget_flame_mid, flame.mid)
+                    setImageViewBitmap(R.id.widget_flame_inner, flame.inner)
+                }
                 setInt(R.id.widget_flame_glow, "setImageAlpha", frame.glowAlpha)
                 setInt(R.id.widget_flame_outer, "setImageAlpha", frame.outerAlpha)
                 setInt(R.id.widget_flame_mid, "setImageAlpha", frame.midAlpha)
@@ -364,16 +380,6 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
             )
         }
     }
-}
-
-/** Mixes an accent toward white so the widget mid-flame reads as hot glow. */
-private fun lightenedAccent(accent: Int): Int {
-    fun mix(channel: Int): Int = (channel + (255 - channel) * 0.45f).toInt().coerceIn(0, 255)
-    return Color.rgb(
-        mix(Color.red(accent)),
-        mix(Color.green(accent)),
-        mix(Color.blue(accent))
-    )
 }
 
 private fun Habit.reconciledForToday(today: String = StreakCalculator.todayString()): Habit {
