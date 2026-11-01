@@ -20,6 +20,7 @@
     <string name="cd_delete_note">Xóa ghi chú</string>
     <string name="cd_open_tasks">Mở việc hôm nay</string>
     <string name="cd_more_options">Mở tùy chọn mục tiêu</string>
+    <string name="cd_close_menu">Đóng tùy chọn mục tiêu</string>
     <string name="cd_color">Màu %1$s</string>
     <string name="cd_theme">Giao diện %1$s</string>
     <string name="cd_format">Định dạng %1$s</string>
@@ -275,8 +276,6 @@
     <string name="widget_preview_goal">Lời hứa hằng ngày</string>
     <string name="widget_preview_status">SẴN SÀNG HÔM NAY</string>
     <string name="widget_preview_check_in">ĐIỂM DANH</string>
-    <string name="widget_eyebrow_today">HÔM NAY</string>
-    <string name="widget_eyebrow_empty">WIDGET</string>
     <plurals name="widget_days">
         <item quantity="one">NGÀY</item>
         <item quantity="other">NGÀY</item>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Square frames: flame and count share the weighted top, detail closes the bottom. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_bg_shape">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <FrameLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1">
+
+                <ImageView android:id="@+id/widget_flame_glow" android:layout_width="match_parent" android:layout_height="match_parent" android:contentDescription="@null" android:scaleType="fitCenter" android:src="@drawable/widget_flame_glow" />
+                <ImageView android:id="@+id/widget_flame_outer" android:layout_width="match_parent" android:layout_height="match_parent" android:contentDescription="@null" android:scaleType="fitCenter" android:src="@drawable/ic_widget_flame_outer" />
+                <ImageView android:id="@+id/widget_flame_mid" android:layout_width="match_parent" android:layout_height="match_parent" android:contentDescription="@null" android:scaleType="fitCenter" android:src="@drawable/ic_widget_flame_mid" />
+                <ImageView android:id="@+id/widget_flame_inner" android:layout_width="match_parent" android:layout_height="match_parent" android:contentDescription="@null" android:scaleType="fitCenter" android:src="@drawable/ic_widget_flame_inner" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="2dp"
+                android:layout_weight="0.95"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <TextView android:id="@+id/widget_streak_count" style="@style/WidgetText" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:includeFontPadding="false" android:maxLines="1" android:text="@string/widget_preview_count" android:textColor="@color/widget_text_primary" android:textSize="26sp" android:textStyle="bold" />
+
+                <TextView android:id="@+id/widget_streak_label" style="@style/WidgetText" android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:gravity="center" android:includeFontPadding="false" android:maxLines="1" android:text="@string/widget_preview_days" android:textColor="@color/widget_text_muted" android:textSize="8sp" android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView android:id="@+id/widget_habit_name" style="@style/WidgetText" android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:gravity="center" android:includeFontPadding="false" android:maxLines="1" android:text="@string/widget_preview_goal" android:textColor="@color/widget_text_primary" android:textSize="12sp" android:textStyle="bold" android:visibility="gone" />
+
+        <TextView android:id="@+id/widget_status" style="@style/WidgetText" android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:gravity="center" android:includeFontPadding="false" android:maxLines="1" android:text="@string/widget_preview_status" android:textColor="@color/widget_text_muted" android:textSize="9sp" android:textStyle="bold" android:visibility="gone" />
+
+        <TextView android:id="@+id/widget_task_progress" style="@style/WidgetText" android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:gravity="center" android:includeFontPadding="false" android:maxLines="1" android:textColor="@color/widget_text_muted" android:textSize="9sp" android:textStyle="bold" android:visibility="gone" />
+
+        <TextView android:id="@+id/widget_check_in" style="@style/WidgetText" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center_horizontal" android:layout_marginTop="2dp" android:background="@drawable/widget_action_shape" android:ellipsize="end" android:gravity="center" android:includeFontPadding="false" android:maxLines="1" android:minWidth="44dp" android:paddingHorizontal="10dp" android:paddingVertical="3dp" android:text="@string/widget_preview_check_in" android:textColor="@color/widget_action_text" android:textSize="9sp" android:textStyle="bold" />
+    </LinearLayout>
+</FrameLayout>

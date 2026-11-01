@@ -1,15 +1,18 @@
 package com.hkm.streakwidget.ui.screens
 
 import android.view.HapticFeedbackConstants
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
@@ -65,12 +68,10 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -79,7 +80,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -153,7 +153,6 @@ fun MainScreen(viewModel: StreakViewModel) {
     var showEditor by remember { mutableStateOf(false) }
     var showNotes by remember { mutableStateOf(false) }
     var showTodos by remember { mutableStateOf(false) }
-    var showMenu by remember { mutableStateOf(false) }
     var showClaimDebtDialog by remember { mutableStateOf(false) }
     var showDebtManageDialog by remember { mutableStateOf(false) }
     var ignitionTargetId by remember { mutableStateOf<String?>(null) }
@@ -319,12 +318,33 @@ fun MainScreen(viewModel: StreakViewModel) {
                                 showEditor = true
                                 tapHaptic()
                             },
-                            onOpenMenu = {
-                                showMenu = true
+                            onSettings = {
+                                screen = AppScreen.SETTINGS
                                 tapHaptic()
                             },
-                            menuAlert = focused?.unclaimedMissedDates(StreakCalculator.todayString())
-                                ?.isNotEmpty() == true
+                            onRescue = {
+                                tapHaptic()
+                                focused?.let { target ->
+                                    if (target.unclaimedMissedDates(StreakCalculator.todayString()).isNotEmpty()) {
+                                        showClaimDebtDialog = true
+                                    } else {
+                                        showDebtManageDialog = true
+                                    }
+                                }
+                            },
+                            onOpenTodos = {
+                                showTodos = true
+                                tapHaptic()
+                            },
+                            onNotes = {
+                                showNotes = true
+                                tapHaptic()
+                            },
+                            onInsights = {
+                                screen = AppScreen.INSIGHTS
+                                tapHaptic()
+                            },
+                            onHaptic = tapHaptic
                         )
 
                         AppTab.GOALS -> GoalsScreen(
@@ -465,28 +485,6 @@ fun MainScreen(viewModel: StreakViewModel) {
                 onHaptic = confirmHaptic
             )
         }
-        if (showMenu) {
-            OptionsSheet(
-                habit = habit,
-                onDismiss = { showMenu = false },
-                onTogglePause = {
-                    tapHaptic()
-                    togglePause(habit.isPausedOn(StreakCalculator.todayString()))
-                },
-                onRescue = {
-                    tapHaptic()
-                    if (habit.unclaimedMissedDates(StreakCalculator.todayString()).isNotEmpty()) {
-                        showClaimDebtDialog = true
-                    } else {
-                        showDebtManageDialog = true
-                    }
-                },
-                onTasks = { tapHaptic(); showTodos = true },
-                onNotes = { tapHaptic(); showNotes = true },
-                onInsights = { tapHaptic(); screen = AppScreen.INSIGHTS },
-                onSettings = { tapHaptic(); screen = AppScreen.SETTINGS }
-            )
-        }
     }
 
     milestoneEvent?.let { event ->
@@ -593,8 +591,12 @@ private fun TodayScreen(
     onToggleToday: (String) -> Unit,
     onTogglePause: (Boolean) -> Unit,
     onCreate: () -> Unit,
-    onOpenMenu: () -> Unit,
-    menuAlert: Boolean
+    onSettings: () -> Unit,
+    onRescue: () -> Unit,
+    onOpenTodos: () -> Unit,
+    onNotes: () -> Unit,
+    onInsights: () -> Unit,
+    onHaptic: () -> Unit
 ) {
     Box(
         modifier
@@ -619,7 +621,12 @@ private fun TodayScreen(
                     isIgniting = ignitionTargetId == habit.id,
                     checkInLocked = ignitionTargetId != null,
                     onToggleToday = onToggleToday,
-                    onTogglePause = onTogglePause
+                    onTogglePause = onTogglePause,
+                    onRescue = onRescue,
+                    onOpenTodos = onOpenTodos,
+                    onNotes = onNotes,
+                    onInsights = onInsights,
+                    onHaptic = onHaptic
                 )
             }
         }
@@ -652,31 +659,13 @@ private fun TodayScreen(
                     }
                 }
             }
-            Box {
-                Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-                ) {
-                    IconButton(onClick = onOpenMenu, modifier = Modifier.size(46.dp)) {
-                        Icon(
-                            imageVector = AppIcons.More,
-                            contentDescription = stringResource(R.string.cd_more_options),
-                            tint = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-                if (menuAlert) {
-                    Box(
-                        Modifier
-                            .align(Alignment.TopEnd)
-                            .offset(x = (-11).dp, y = 11.dp)
-                            .size(6.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.error)
-                    )
-                }
+            IconButton(onClick = onSettings, modifier = Modifier.size(46.dp)) {
+                Icon(
+                    imageVector = AppIcons.Gear,
+                    contentDescription = stringResource(R.string.cd_settings),
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.size(21.dp)
+                )
             }
         }
     }
@@ -688,11 +677,22 @@ private fun FocusCard(
     isIgniting: Boolean,
     checkInLocked: Boolean,
     onToggleToday: (String) -> Unit,
-    onTogglePause: (Boolean) -> Unit
+    onTogglePause: (Boolean) -> Unit,
+    onRescue: () -> Unit,
+    onOpenTodos: () -> Unit,
+    onNotes: () -> Unit,
+    onInsights: () -> Unit,
+    onHaptic: () -> Unit
 ) {
     val today = StreakCalculator.todayString()
     val completed = today in habit.completionHistory
     val paused = habit.isPausedOn(today)
+    var expanded by remember(habit.id) { mutableStateOf(false) }
+    BackHandler(enabled = expanded) { expanded = false }
+    val choose: (() -> Unit) -> Unit = { action ->
+        expanded = false
+        action()
+    }
     val flameState = when {
         isIgniting -> FlameState.IGNITING
         completed -> FlameState.COMPLETED
@@ -783,7 +783,11 @@ private fun FocusCard(
                 .padding(bottom = 18.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            AnimatedVisibility(isIgniting) {
+            AnimatedVisibility(
+                visible = isIgniting,
+                enter = fadeIn(tween(180)) + expandVertically(tween(220), expandFrom = Alignment.Bottom),
+                exit = fadeOut(tween(120)) + shrinkVertically(tween(160), shrinkTowards = Alignment.Bottom)
+            ) {
                 Text(
                     stringResource(
                         if (habit.theme == VisualTheme.TREE) R.string.today_nurturing else R.string.today_lighting
@@ -794,9 +798,44 @@ private fun FocusCard(
                     modifier = Modifier.padding(bottom = 6.dp)
                 )
             }
-            Spacer(Modifier.height(6.dp))
+            AnimatedVisibility(
+                visible = expanded,
+                enter = fadeIn(tween(170)) + expandVertically(
+                    animationSpec = spring(dampingRatio = 0.82f, stiffness = Spring.StiffnessMediumLow),
+                    expandFrom = Alignment.Bottom
+                ),
+                exit = fadeOut(tween(110)) + shrinkVertically(tween(150), shrinkTowards = Alignment.Bottom)
+            ) {
+                FocusActions(
+                    habit = habit,
+                    paused = paused,
+                    onTogglePause = { choose { onTogglePause(paused) } },
+                    onRescue = { choose(onRescue) },
+                    onOpenTodos = { choose(onOpenTodos) },
+                    onNotes = { choose(onNotes) },
+                    onInsights = { choose(onInsights) }
+                )
+            }
+            IconButton(
+                onClick = {
+                    expanded = !expanded
+                    if (expanded) onHaptic()
+                },
+                modifier = Modifier.size(42.dp)
+            ) {
+                Icon(
+                    imageVector = if (expanded) AppIcons.X else AppIcons.Sliders,
+                    contentDescription = stringResource(
+                        if (expanded) R.string.cd_close_menu else R.string.cd_more_options
+                    ),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(19.dp)
+                )
+            }
+            Spacer(Modifier.height(4.dp))
             Button(
                 onClick = {
+                    expanded = false
                     if (paused) onTogglePause(true) else onToggleToday(habit.id)
                 },
                 enabled = paused || !checkInLocked,
@@ -816,158 +855,111 @@ private fun FocusCard(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun OptionsSheet(
+private fun FocusActions(
     habit: Habit,
-    onDismiss: () -> Unit,
+    paused: Boolean,
     onTogglePause: () -> Unit,
     onRescue: () -> Unit,
-    onTasks: () -> Unit,
+    onOpenTodos: () -> Unit,
     onNotes: () -> Unit,
-    onInsights: () -> Unit,
-    onSettings: () -> Unit
+    onInsights: () -> Unit
 ) {
     val today = StreakCalculator.todayString()
-    val paused = habit.isPausedOn(today)
     val hasTodos = habit.goalType == GoalType.CHECKLIST && habit.todoItems.isNotEmpty()
     val doneTodos = habit.todoItems.count { it.isCompletedOn(today) }
     val unclaimed = habit.unclaimedMissedDates(today).size
     val rescueCount = unclaimed + habit.debts.size
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val scope = rememberCoroutineScope()
-    val choose: (() -> Unit) -> Unit = { action ->
-        scope.launch {
-            runCatching { sheetState.hide() }
-            onDismiss()
-            action()
-        }
-    }
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+    Column(
+        Modifier
+            .widthIn(max = 236.dp)
+            .clip(RoundedCornerShape(22.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f))
+            .padding(6.dp)
     ) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(start = 12.dp, end = 12.dp, bottom = 14.dp)
-        ) {
-            Text(
-                habit.name,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.ExtraBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 6.dp)
-            )
-            SheetRow(
-                icon = if (paused) AppIcons.Play else AppIcons.Pause,
-                label = stringResource(if (paused) R.string.today_resume_today else R.string.today_pause_today),
-                status = if (paused) stringResource(R.string.today_paused_title) else null,
-                onClick = { choose(onTogglePause) }
-            )
-            if (rescueCount > 0) {
-                SheetRow(
-                    icon = AppIcons.Shield,
-                    label = stringResource(R.string.debt_manage_title),
-                    status = pluralStringResource(R.plurals.sheet_rescue_days, rescueCount, rescueCount),
-                    accent = unclaimed > 0,
-                    onClick = { choose(onRescue) }
-                )
-            }
-            if (hasTodos) {
-                SheetRow(
-                    icon = AppIcons.ListChecks,
-                    label = stringResource(R.string.sheet_tasks),
-                    status = stringResource(R.string.sheet_tasks_progress, doneTodos, habit.todoItems.size),
-                    onClick = { choose(onTasks) }
-                )
-            }
-            SheetRow(
-                icon = AppIcons.Note,
-                label = stringResource(R.string.notes_title),
-                status = if (habit.notes.isEmpty()) {
-                    stringResource(R.string.sheet_notes_empty)
-                } else {
-                    pluralStringResource(R.plurals.sheet_notes_count, habit.notes.size, habit.notes.size)
-                },
-                onClick = { choose(onNotes) }
-            )
-            SheetRow(
-                icon = AppIcons.Chart,
-                label = stringResource(R.string.insights_title),
-                trailingChevron = true,
-                onClick = { choose(onInsights) }
-            )
-            SheetRow(
-                icon = AppIcons.Gear,
-                label = stringResource(R.string.common_settings),
-                trailingChevron = true,
-                onClick = { choose(onSettings) }
+        FocusActionRow(
+            icon = if (paused) AppIcons.Play else AppIcons.Pause,
+            label = stringResource(if (paused) R.string.today_resume_today else R.string.today_pause_today),
+            status = if (paused) stringResource(R.string.today_paused_title) else null,
+            onClick = onTogglePause
+        )
+        if (rescueCount > 0) {
+            FocusActionRow(
+                icon = AppIcons.Shield,
+                label = stringResource(R.string.debt_manage_title),
+                status = pluralStringResource(R.plurals.sheet_rescue_days, rescueCount, rescueCount),
+                accent = unclaimed > 0,
+                onClick = onRescue
             )
         }
+        if (hasTodos) {
+            FocusActionRow(
+                icon = AppIcons.ListChecks,
+                label = stringResource(R.string.sheet_tasks),
+                status = stringResource(R.string.sheet_tasks_progress, doneTodos, habit.todoItems.size),
+                onClick = onOpenTodos
+            )
+        }
+        FocusActionRow(
+            icon = AppIcons.Note,
+            label = stringResource(R.string.notes_title),
+            status = if (habit.notes.isEmpty()) {
+                stringResource(R.string.sheet_notes_empty)
+            } else {
+                pluralStringResource(R.plurals.sheet_notes_count, habit.notes.size, habit.notes.size)
+            },
+            onClick = onNotes
+        )
+        FocusActionRow(
+            icon = AppIcons.Chart,
+            label = stringResource(R.string.insights_title),
+            chevron = true,
+            onClick = onInsights
+        )
     }
 }
 
 @Composable
-private fun SheetRow(
+private fun FocusActionRow(
     icon: ImageVector,
     label: String,
     onClick: () -> Unit,
     status: String? = null,
     accent: Boolean = false,
-    trailingChevron: Boolean = false
+    chevron: Boolean = false
 ) {
+    val tint = if (accent) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
     Row(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 11.dp),
+            .padding(start = 10.dp, end = 8.dp, top = 10.dp, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(
-                    if (accent) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.surfaceVariant
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                icon,
-                contentDescription = null,
-                tint = if (accent) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.size(18.dp)
-            )
-        }
-        Spacer(Modifier.width(12.dp))
+        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(11.dp))
         Text(
             label,
-            color = MaterialTheme.colorScheme.onSurface,
-            fontSize = 15.sp,
+            color = tint,
+            fontSize = 14.sp,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f)
         )
         if (status != null) {
-            Spacer(Modifier.width(10.dp))
+            Spacer(Modifier.width(8.dp))
             Text(
                 status,
                 color = if (accent) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 13.sp,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1
             )
         }
-        if (trailingChevron) {
+        if (chevron) {
             Spacer(Modifier.width(2.dp))
             Icon(
                 AppIcons.ChevronRight,

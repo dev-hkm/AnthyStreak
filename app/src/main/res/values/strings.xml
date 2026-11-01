@@ -22,6 +22,7 @@
     <string name="cd_delete_note">Delete note</string>
     <string name="cd_open_tasks">Open daily tasks</string>
     <string name="cd_more_options">Open goal options</string>
+    <string name="cd_close_menu">Close goal options</string>
     <string name="cd_color">%1$s color</string>
     <string name="cd_theme">%1$s theme</string>
     <string name="cd_format">%1$s format</string>
@@ -277,8 +278,6 @@
     <string name="widget_preview_goal">Your daily promise</string>
     <string name="widget_preview_status">READY FOR TODAY</string>
     <string name="widget_preview_check_in">CHECK IN</string>
-    <string name="widget_eyebrow_today">TODAY</string>
-    <string name="widget_eyebrow_empty">WIDGET</string>
     <plurals name="widget_days">
         <item quantity="one">DAY</item>
         <item quantity="other">DAYS</item>

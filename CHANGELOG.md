@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.3 — 2026-11-01
+
+### Changed
+- Today screen: the goal options now fan out inline right above the check-in button instead of opening a bottom sheet. Tapping a row opens that section instantly, with no close-then-open delay.
+- The trigger is a bare slider icon that becomes an X while open; back or a second tap folds it away.
+- Settings is back as a plain gear icon in the header, and the goal options no longer contain a duplicate settings row.
+- Widget rebuilt from scratch: four self-filling structures (mini, row, column, stack) replace the fixed size buckets. Typography, padding, corner radius, and visible rows are derived from the actual frame in dp, so the widget fills every aspect ratio, including the smallest cell Android allows.
+
 ## 1.6.2 — 2026-10-31
 
 ### Changed

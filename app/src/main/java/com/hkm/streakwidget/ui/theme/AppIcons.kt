@@ -32,6 +32,7 @@ object AppIcons {
     val Flame: ImageVector get() = PhosphorIcons.Light.Flame
     val Plant: ImageVector get() = PhosphorIcons.Light.Plant
     val More: ImageVector get() = PhosphorIcons.Light.DotsThreeVertical
+    val Sliders: ImageVector get() = PhosphorIcons.Light.Sliders
     val Calendar: ImageVector get() = PhosphorIcons.Light.CalendarDots
     val Target: ImageVector get() = PhosphorIcons.Light.Target
     val Bell: ImageVector get() = PhosphorIcons.Light.BellRinging
