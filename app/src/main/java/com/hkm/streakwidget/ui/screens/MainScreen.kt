@@ -58,6 +58,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
@@ -94,15 +96,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -151,6 +156,7 @@ fun MainScreen(viewModel: StreakViewModel) {
     val context = LocalContext.current
     val view = LocalView.current
     var tab by remember { mutableStateOf(AppTab.TODAY) }
+    val pagerState = rememberPagerState(initialPage = tab.ordinal) { 2 }
     var screen by remember { mutableStateOf(AppScreen.HOME) }
     var backProgress by remember { mutableStateOf(0f) }
     var editorTarget by remember { mutableStateOf<Habit?>(null) }
@@ -242,6 +248,9 @@ fun MainScreen(viewModel: StreakViewModel) {
             ) {
                 BottomTabToggle(
                     selected = tab,
+                    progressProvider = {
+                        (pagerState.currentPage + pagerState.currentPageOffsetFraction).coerceIn(0f, 1f)
+                    },
                     onSelect = {
                         if (tab != it) {
                             tab = it
@@ -271,108 +280,114 @@ fun MainScreen(viewModel: StreakViewModel) {
             label = "app_screen"
         ) { currentScreen ->
             when (currentScreen) {
-                AppScreen.HOME -> AnimatedContent(
-                    targetState = tab,
-                    modifier = Modifier.fillMaxSize(),
-                    transitionSpec = {
-                        val navEase = CubicBezierEasing(0.22f, 1f, 0.36f, 1f)
-                        when {
-                            reduceMotion -> fadeIn(tween(180)) togetherWith fadeOut(tween(120))
-                            targetState.ordinal > initialState.ordinal ->
-                                (slideInHorizontally(tween(340, easing = navEase)) { it / 10 } + fadeIn(tween(260, easing = navEase))) togetherWith
-                                    (slideOutHorizontally(tween(260, easing = navEase)) { -it / 12 } + fadeOut(tween(180)))
-                            else ->
-                                (slideInHorizontally(tween(340, easing = navEase)) { -it / 10 } + fadeIn(tween(260, easing = navEase))) togetherWith
-                                    (slideOutHorizontally(tween(260, easing = navEase)) { it / 12 } + fadeOut(tween(180)))
-                        }
-                    },
-                    label = "main_tab_slide"
-                ) { currentTab ->
-                    when (currentTab) {
-                        AppTab.TODAY -> TodayScreen(
-                            modifier = Modifier,
-                            focused = focused,
-                            ignitionTargetId = ignitionTargetId,
-                            onToggleToday = checkIn@{ habitId ->
-                                val target = habits.firstOrNull { it.id == habitId && !it.isArchived }
-                                    ?: return@checkIn
-                                val alreadyDone = target.completionHistory.contains(StreakCalculator.todayString())
-                                when {
-                                    ignitionTargetId != null -> Unit
-                                    alreadyDone -> {
-                                        viewModel.toggleToday(habitId)
-                                        confirmHaptic()
-                                    }
-                                    reduceMotion -> {
-                                        viewModel.toggleToday(habitId)
-                                        confirmHaptic()
-                                    }
-                                    else -> scope.launch {
-                                        tapHaptic()
-                                        ignitionTargetId = habitId
-                                        delay(1050)
-                                        viewModel.toggleToday(habitId)
-                                        confirmHaptic()
-                                        delay(2550)
-                                        if (ignitionTargetId == habitId) ignitionTargetId = null
-                                    }
-                                }
-                            },
-                            onTogglePause = togglePause,
-                            onCreate = {
-                                editorTarget = null
-                                showEditor = true
-                                tapHaptic()
-                            },
-                            onSettings = {
-                                screen = AppScreen.SETTINGS
-                                tapHaptic()
-                            },
-                            onRescue = {
-                                tapHaptic()
-                                focused?.let { target ->
-                                    if (target.unclaimedMissedDates(StreakCalculator.todayString()).isNotEmpty()) {
-                                        showClaimDebtDialog = true
-                                    } else {
-                                        showDebtManageDialog = true
-                                    }
-                                }
-                            },
-                            onOpenTodos = {
-                                showTodos = true
-                                tapHaptic()
-                            },
-                            onNotes = {
-                                showNotes = true
-                                tapHaptic()
-                            },
-                            onInsights = {
-                                screen = AppScreen.INSIGHTS
-                                tapHaptic()
-                            },
-                            onHaptic = tapHaptic
-                        )
-
-                        AppTab.GOALS -> GoalsScreen(
-                            modifier = Modifier,
-                            active = activeHabits,
-                            archived = archivedHabits,
-                            onCreate = {
-                                editorTarget = null
-                                showEditor = true
-                                tapHaptic()
-                            },
-                            onSelect = {
-                                viewModel.setFocusHabit(it)
-                                tab = AppTab.TODAY
-                                tapHaptic()
-                            },
-                            onManage = {
-                                viewModel.setFocusHabit(it)
-                                managingHabit = it
-                                tapHaptic()
+                AppScreen.HOME -> {
+                    LaunchedEffect(tab, reduceMotion) {
+                        if (pagerState.currentPage != tab.ordinal) {
+                            if (reduceMotion) {
+                                pagerState.scrollToPage(tab.ordinal)
+                            } else {
+                                pagerState.animateScrollToPage(
+                                    page = tab.ordinal,
+                                    animationSpec = tween(
+                                        durationMillis = 420,
+                                        easing = CubicBezierEasing(0.22f, 1f, 0.36f, 1f)
+                                    )
+                                )
                             }
-                        )
+                        }
+                    }
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier.fillMaxSize(),
+                        userScrollEnabled = false,
+                        beyondViewportPageCount = 1
+                    ) { page ->
+                        when (page) {
+                            AppTab.TODAY.ordinal -> TodayScreen(
+                                modifier = Modifier,
+                                focused = focused,
+                                ignitionTargetId = ignitionTargetId,
+                                onToggleToday = checkIn@{ habitId ->
+                                    val target = habits.firstOrNull { it.id == habitId && !it.isArchived }
+                                        ?: return@checkIn
+                                    val alreadyDone = target.completionHistory.contains(StreakCalculator.todayString())
+                                    when {
+                                        ignitionTargetId != null -> Unit
+                                        alreadyDone -> {
+                                            viewModel.toggleToday(habitId)
+                                            confirmHaptic()
+                                        }
+                                        reduceMotion -> {
+                                            viewModel.toggleToday(habitId)
+                                            confirmHaptic()
+                                        }
+                                        else -> scope.launch {
+                                            tapHaptic()
+                                            ignitionTargetId = habitId
+                                            delay(1050)
+                                            viewModel.toggleToday(habitId)
+                                            confirmHaptic()
+                                            delay(2550)
+                                            if (ignitionTargetId == habitId) ignitionTargetId = null
+                                        }
+                                    }
+                                },
+                                onTogglePause = togglePause,
+                                onCreate = {
+                                    editorTarget = null
+                                    showEditor = true
+                                    tapHaptic()
+                                },
+                                onSettings = {
+                                    screen = AppScreen.SETTINGS
+                                    tapHaptic()
+                                },
+                                onRescue = {
+                                    tapHaptic()
+                                    focused?.let { target ->
+                                        if (target.unclaimedMissedDates(StreakCalculator.todayString()).isNotEmpty()) {
+                                            showClaimDebtDialog = true
+                                        } else {
+                                            showDebtManageDialog = true
+                                        }
+                                    }
+                                },
+                                onOpenTodos = {
+                                    showTodos = true
+                                    tapHaptic()
+                                },
+                                onNotes = {
+                                    showNotes = true
+                                    tapHaptic()
+                                },
+                                onInsights = {
+                                    screen = AppScreen.INSIGHTS
+                                    tapHaptic()
+                                },
+                                onHaptic = tapHaptic
+                            )
+
+                            else -> GoalsScreen(
+                                modifier = Modifier,
+                                active = activeHabits,
+                                archived = archivedHabits,
+                                onCreate = {
+                                    editorTarget = null
+                                    showEditor = true
+                                    tapHaptic()
+                                },
+                                onSelect = {
+                                    viewModel.setFocusHabit(it)
+                                    tab = AppTab.TODAY
+                                    tapHaptic()
+                                },
+                                onManage = {
+                                    viewModel.setFocusHabit(it)
+                                    managingHabit = it
+                                    tapHaptic()
+                                }
+                            )
+                        }
                     }
                 }
 
@@ -504,13 +519,13 @@ fun MainScreen(viewModel: StreakViewModel) {
 }
 
 @Composable
-private fun BottomTabToggle(selected: AppTab, onSelect: (AppTab) -> Unit) {
-    val navEase = remember { CubicBezierEasing(0.22f, 1f, 0.36f, 1f) }
-    val indicatorProgress by animateFloatAsState(
-        targetValue = if (selected == AppTab.TODAY) 0f else 1f,
-        animationSpec = tween(durationMillis = 360, easing = navEase),
-        label = "tab_indicator_progress"
-    )
+private fun BottomTabToggle(
+    selected: AppTab,
+    progressProvider: () -> Float,
+    onSelect: (AppTab) -> Unit
+) {
+    val todayLabel = stringResource(R.string.tab_today)
+    val goalsLabel = stringResource(R.string.tab_goals)
     Box(
         Modifier
             .fillMaxWidth()
@@ -526,34 +541,82 @@ private fun BottomTabToggle(selected: AppTab, onSelect: (AppTab) -> Unit) {
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(30.dp))
         ) {
             val segmentWidth = (maxWidth - 10.dp) / 2
-            val density = androidx.compose.ui.platform.LocalDensity.current
+            val density = LocalDensity.current
             val padPx = with(density) { 5.dp.toPx() }
             val segmentPx = with(density) { segmentWidth.toPx() }
+            val unselectedTint = MaterialTheme.colorScheme.onSurfaceVariant
+            val selectedTint = MaterialTheme.colorScheme.surface
+            val todayInteraction = remember { MutableInteractionSource() }
+            val goalsInteraction = remember { MutableInteractionSource() }
+
+            // Layer 1: Static unselected labels + click targets (no ripple, no flash).
+            Row(Modifier.fillMaxSize().padding(horizontal = 5.dp)) {
+                BottomTabToggleLabel(
+                    label = todayLabel,
+                    icon = AppIcons.Check,
+                    tint = unselectedTint,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clickable(
+                            interactionSource = todayInteraction,
+                            indication = null,
+                            role = Role.Tab,
+                            onClick = { onSelect(AppTab.TODAY) }
+                        )
+                )
+                BottomTabToggleLabel(
+                    label = goalsLabel,
+                    icon = AppIcons.ListChecks,
+                    tint = unselectedTint,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clickable(
+                            interactionSource = goalsInteraction,
+                            indication = null,
+                            role = Role.Tab,
+                            onClick = { onSelect(AppTab.GOALS) }
+                        )
+                )
+            }
+
+            // Layer 2: GPU-translated sliding pill synced directly with pager fraction.
             Box(
                 Modifier
                     .align(Alignment.CenterStart)
                     .graphicsLayer {
-                        translationX = padPx + (indicatorProgress * segmentPx).coerceIn(0f, segmentPx)
+                        translationX = padPx + (progressProvider() * segmentPx).coerceIn(0f, segmentPx)
                     }
                     .width(segmentWidth)
                     .height(48.dp)
                     .clip(RoundedCornerShape(25.dp))
                     .background(MaterialTheme.colorScheme.onSurface)
             )
-            Row(Modifier.fillMaxSize()) {
-                BottomTabToggleItem(
-                    label = stringResource(R.string.tab_today),
+
+            // Layer 3: Inverted labels clipped exclusively to the active pill bounds.
+            Row(
+                Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 5.dp)
+                    .drawWithContent {
+                        val pillLeft = (progressProvider() * segmentPx).coerceIn(0f, segmentPx)
+                        clipRect(left = pillLeft, top = 0f, right = pillLeft + segmentPx, bottom = size.height) {
+                            this@drawWithContent.drawContent()
+                        }
+                    }
+            ) {
+                BottomTabToggleLabel(
+                    label = todayLabel,
                     icon = AppIcons.Check,
-                    selected = selected == AppTab.TODAY,
-                    modifier = Modifier.weight(1f),
-                    onClick = { onSelect(AppTab.TODAY) }
+                    tint = selectedTint,
+                    modifier = Modifier.weight(1f).fillMaxHeight()
                 )
-                BottomTabToggleItem(
-                    label = stringResource(R.string.tab_goals),
+                BottomTabToggleLabel(
+                    label = goalsLabel,
                     icon = AppIcons.ListChecks,
-                    selected = selected == AppTab.GOALS,
-                    modifier = Modifier.weight(1f),
-                    onClick = { onSelect(AppTab.GOALS) }
+                    tint = selectedTint,
+                    modifier = Modifier.weight(1f).fillMaxHeight()
                 )
             }
         }
@@ -561,41 +624,27 @@ private fun BottomTabToggle(selected: AppTab, onSelect: (AppTab) -> Unit) {
 }
 
 @Composable
-private fun BottomTabToggleItem(
+private fun BottomTabToggleLabel(
     label: String,
     icon: ImageVector,
-    selected: Boolean,
-    modifier: Modifier,
-    onClick: () -> Unit
+    tint: Color,
+    modifier: Modifier = Modifier
 ) {
-    val navEase = remember { CubicBezierEasing(0.22f, 1f, 0.36f, 1f) }
-    val interactionSource = remember { MutableInteractionSource() }
-    val tint by animateColorAsState(
-        targetValue = if (selected) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onSurfaceVariant,
-        animationSpec = tween(durationMillis = 320, easing = navEase),
-        label = "tab_label_color"
-    )
-    val scale by animateFloatAsState(
-        targetValue = if (selected) 1f else 0.96f,
-        animationSpec = tween(durationMillis = 320, easing = navEase),
-        label = "tab_label_scale"
-    )
     Row(
-        modifier
-            .fillMaxHeight()
-            .clip(RoundedCornerShape(25.dp))
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null,
-                onClick = onClick
-            )
-            .graphicsLayer(scaleX = scale, scaleY = scale),
+        modifier = modifier,
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(17.dp))
         Spacer(Modifier.width(7.dp))
-        Text(label, color = tint, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp)
+        Text(
+            text = label,
+            color = tint,
+            fontWeight = FontWeight.ExtraBold,
+            fontSize = 14.sp,
+            maxLines = 1,
+            softWrap = false
+        )
     }
 }
 
@@ -1461,9 +1510,10 @@ private fun GoalsScreen(
             }
         }
         items(active, key = Habit::id) { habit ->
+            val presentation = remember(habit, today, copy) { goalRowPresentation(habit, today, copy) }
             GoalRow(
                 habit = habit,
-                presentation = goalRowPresentation(habit, today, copy),
+                presentation = presentation,
                 onClick = { onSelect(habit) },
                 onAction = { onManage(habit) },
                 modifier = Modifier.animateItem()
@@ -1481,9 +1531,10 @@ private fun GoalsScreen(
                 )
             }
             items(archived, key = Habit::id) { habit ->
+                val presentation = remember(habit, today, copy) { goalRowPresentation(habit, today, copy) }
                 GoalRow(
                     habit = habit,
-                    presentation = goalRowPresentation(habit, today, copy),
+                    presentation = presentation,
                     onClick = { onManage(habit) },
                     onAction = { onManage(habit) },
                     modifier = Modifier.animateItem()

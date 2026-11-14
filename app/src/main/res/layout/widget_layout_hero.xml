@@ -17,44 +17,14 @@
         android:gravity="center"
         android:orientation="vertical">
 
-        <FrameLayout
-            android:id="@+id/widget_flame_box"
+        <ImageView
+            android:id="@+id/widget_flame_outer"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1">
-
-            <ImageView
-                android:id="@+id/widget_flame_glow"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:contentDescription="@null"
-                android:scaleType="fitCenter"
-                android:src="@drawable/widget_flame_glow" />
-
-            <ImageView
-                android:id="@+id/widget_flame_outer"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:contentDescription="@null"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_widget_flame_outer" />
-
-            <ImageView
-                android:id="@+id/widget_flame_mid"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:contentDescription="@null"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_widget_flame_mid" />
-
-            <ImageView
-                android:id="@+id/widget_flame_inner"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:contentDescription="@null"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_widget_flame_inner" />
-        </FrameLayout>
+            android:layout_weight="1"
+            android:contentDescription="@null"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_widget_flame_outer" />
 
         <TextView
             android:id="@+id/widget_streak_count"
@@ -67,8 +37,7 @@
             android:maxLines="1"
             android:text="@string/widget_preview_count"
             android:textColor="@color/widget_text_primary"
-            android:textSize="30sp"
-            android:textStyle="bold" />
+            android:textSize="30sp" />
 
         <TextView
             android:id="@+id/widget_streak_label"
@@ -82,8 +51,7 @@
             android:maxLines="1"
             android:text="@string/widget_preview_days"
             android:textColor="@color/widget_text_muted"
-            android:textSize="8.5sp"
-            android:textStyle="bold" />
+            android:textSize="8.5sp" />
     </LinearLayout>
 
     <LinearLayout
@@ -107,8 +75,7 @@
             android:maxLines="1"
             android:text="@string/widget_preview_today"
             android:textColor="@color/widget_text_muted"
-            android:textSize="9sp"
-            android:textStyle="bold" />
+            android:textSize="9sp" />
 
         <TextView
             android:id="@+id/widget_habit_name"
@@ -120,8 +87,7 @@
             android:maxLines="2"
             android:text="@string/widget_preview_goal"
             android:textColor="@color/widget_text_primary"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            android:textSize="18sp" />
 
         <TextView
             android:id="@+id/widget_status"
@@ -134,8 +100,7 @@
             android:maxLines="1"
             android:text="@string/widget_preview_status"
             android:textColor="@color/widget_text_muted"
-            android:textSize="9.5sp"
-            android:textStyle="bold" />
+            android:textSize="9.5sp" />
 
         <TextView
             android:id="@+id/widget_task_progress"
@@ -148,7 +113,6 @@
             android:maxLines="1"
             android:textColor="@color/widget_text_muted"
             android:textSize="9.5sp"
-            android:textStyle="bold"
             android:visibility="gone" />
 
         <TextView
@@ -165,7 +129,6 @@
             android:paddingHorizontal="10dp"
             android:text="@string/widget_preview_check_in"
             android:textColor="@color/widget_action_text"
-            android:textSize="10.5sp"
-            android:textStyle="bold" />
+            android:textSize="10.5sp" />
     </LinearLayout>
 </LinearLayout>

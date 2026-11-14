@@ -10,14 +10,14 @@ import org.junit.Test
 
 class WidgetLayoutSpecTest {
     @Test
-    fun `structure selector covers all eight topologies across crop aspect ratios`() {
+    fun `structure selector covers all seven adaptive topologies across crop aspect ratios`() {
         assertEquals(WidgetStructure.MICRO_ROW, WidgetLayoutSpec.structureFor(68, 48))
         assertEquals(WidgetStructure.MICRO_STACK, WidgetLayoutSpec.structureFor(68, 72))
         assertEquals(WidgetStructure.STRIP_ROW, WidgetLayoutSpec.structureFor(180, 56))
         assertEquals(WidgetStructure.COMPACT_SPLIT, WidgetLayoutSpec.structureFor(140, 76))
         assertEquals(WidgetStructure.COLUMN, WidgetLayoutSpec.structureFor(68, 180))
         assertEquals(WidgetStructure.SQUARE, WidgetLayoutSpec.structureFor(140, 140))
-        assertEquals(WidgetStructure.POSTER_STACK, WidgetLayoutSpec.structureFor(140, 140, WidgetStyle.POSTER))
+        assertEquals(WidgetStructure.SQUARE, WidgetLayoutSpec.structureFor(140, 140, WidgetStyle.POSTER))
         assertEquals(WidgetStructure.HERO, WidgetLayoutSpec.structureFor(240, 140))
     }
 
@@ -88,35 +88,32 @@ class WidgetLayoutSpecTest {
     }
 
     @Test
-    fun `style resolution respects ember poster checklist and long Vietnamese actions`() {
-        val emberHero = WidgetLayoutSpec.plan(240, 140, WidgetStyle.EMBER, hasChecklist = false)
-        assertFalse(emberHero.showName)
-        assertFalse(emberHero.showAction)
+    fun `unified adaptive widget automatically shows checklist progress and scales Vietnamese actions`() {
+        val unifiedHero = WidgetLayoutSpec.plan(240, 140, WidgetStyle.FOCUS, hasChecklist = false)
+        assertEquals(WidgetStructure.HERO, unifiedHero.structure)
+        assertTrue(unifiedHero.showName)
+        assertTrue(unifiedHero.showAction)
+        assertTrue(unifiedHero.showEyebrow)
+        assertTrue(unifiedHero.showStatus)
+        assertFalse(unifiedHero.showProgress)
 
-        val posterSquare = WidgetLayoutSpec.plan(140, 140, WidgetStyle.POSTER, hasChecklist = false)
-        assertEquals(WidgetStructure.POSTER_STACK, posterSquare.structure)
-        assertTrue(posterSquare.showName)
-        assertTrue(posterSquare.showAction)
-        assertFalse(posterSquare.showProgress)
-
-        val posterHero = WidgetLayoutSpec.plan(240, 140, WidgetStyle.POSTER, hasChecklist = true)
-        assertEquals(WidgetStructure.HERO, posterHero.structure)
-        assertTrue(posterHero.showName)
-        assertTrue(posterHero.showAction)
-        assertFalse(posterHero.showEyebrow)
-        assertFalse(posterHero.showStatus)
-        assertFalse(posterHero.showProgress)
-
-        val checklistSquare = WidgetLayoutSpec.plan(140, 140, WidgetStyle.CHECKLIST, hasChecklist = true)
+        val checklistSquare = WidgetLayoutSpec.plan(140, 140, WidgetStyle.FOCUS, hasChecklist = true)
+        assertEquals(WidgetStructure.SQUARE, checklistSquare.structure)
         assertTrue(checklistSquare.showProgress)
+
+        val checklistHero = WidgetLayoutSpec.plan(240, 140, WidgetStyle.POSTER, hasChecklist = true)
+        assertEquals(WidgetStructure.HERO, checklistHero.structure)
+        assertTrue(checklistHero.showName)
+        assertTrue(checklistHero.showAction)
+        assertTrue(checklistHero.showProgress)
 
         val shortAction = WidgetLayoutSpec.plan(140, 140, WidgetStyle.FOCUS, hasChecklist = false, actionCharCount = 6)
         val longViAction = WidgetLayoutSpec.plan(140, 140, WidgetStyle.FOCUS, hasChecklist = false, actionCharCount = 16)
         assertTrue(longViAction.actionSp < shortAction.actionSp)
 
         assertEquals(WidgetStyle.FOCUS, resolvedStyle(240, 140, WidgetStyle.CHECKLIST, hasChecklist = false))
-        assertEquals(WidgetStyle.CHECKLIST, resolvedStyle(240, 140, WidgetStyle.CHECKLIST, hasChecklist = true))
-        assertEquals(WidgetStyle.POSTER, resolvedStyle(240, 140, WidgetStyle.POSTER, hasChecklist = false))
+        assertEquals(WidgetStyle.CHECKLIST, resolvedStyle(240, 140, WidgetStyle.FOCUS, hasChecklist = true))
+        assertEquals(WidgetStyle.FOCUS, resolvedStyle(240, 140, WidgetStyle.POSTER, hasChecklist = false))
     }
 
     @Test

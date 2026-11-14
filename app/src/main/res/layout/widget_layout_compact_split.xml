@@ -16,44 +16,14 @@
         android:gravity="center"
         android:orientation="vertical">
 
-        <FrameLayout
-            android:id="@+id/widget_flame_box"
+        <ImageView
+            android:id="@+id/widget_flame_outer"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1">
-
-            <ImageView
-                android:id="@+id/widget_flame_glow"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:contentDescription="@null"
-                android:scaleType="fitCenter"
-                android:src="@drawable/widget_flame_glow" />
-
-            <ImageView
-                android:id="@+id/widget_flame_outer"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:contentDescription="@null"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_widget_flame_outer" />
-
-            <ImageView
-                android:id="@+id/widget_flame_mid"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:contentDescription="@null"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_widget_flame_mid" />
-
-            <ImageView
-                android:id="@+id/widget_flame_inner"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:contentDescription="@null"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_widget_flame_inner" />
-        </FrameLayout>
+            android:layout_weight="1"
+            android:contentDescription="@null"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_widget_flame_outer" />
 
         <TextView
             android:id="@+id/widget_streak_count"
@@ -65,8 +35,7 @@
             android:maxLines="1"
             android:text="@string/widget_preview_count"
             android:textColor="@color/widget_text_primary"
-            android:textSize="17sp"
-            android:textStyle="bold" />
+            android:textSize="17sp" />
 
         <TextView
             android:id="@+id/widget_streak_label"
@@ -80,7 +49,6 @@
             android:text="@string/widget_preview_days"
             android:textColor="@color/widget_text_muted"
             android:textSize="6.5sp"
-            android:textStyle="bold"
             android:visibility="gone" />
     </LinearLayout>
 
@@ -110,8 +78,7 @@
             android:maxLines="1"
             android:text="@string/widget_preview_goal"
             android:textColor="@color/widget_text_primary"
-            android:textSize="13sp"
-            android:textStyle="bold" />
+            android:textSize="13sp" />
 
         <TextView
             android:id="@+id/widget_status"
@@ -125,7 +92,6 @@
             android:text="@string/widget_preview_status"
             android:textColor="@color/widget_text_muted"
             android:textSize="7.5sp"
-            android:textStyle="bold"
             android:visibility="gone" />
 
         <TextView
@@ -139,7 +105,6 @@
             android:maxLines="1"
             android:textColor="@color/widget_text_muted"
             android:textSize="7.5sp"
-            android:textStyle="bold"
             android:visibility="gone" />
 
         <TextView
@@ -156,7 +121,6 @@
             android:paddingHorizontal="6dp"
             android:text="@string/widget_preview_check_in"
             android:textColor="@color/widget_action_text"
-            android:textSize="8.5sp"
-            android:textStyle="bold" />
+            android:textSize="8.5sp" />
     </LinearLayout>
 </LinearLayout>

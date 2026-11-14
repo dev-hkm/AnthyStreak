@@ -26,7 +26,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -34,10 +33,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -56,8 +52,9 @@ import com.hkm.streakwidget.R
 import com.hkm.streakwidget.data.HabitRepository
 import com.hkm.streakwidget.data.localizedFor
 import com.hkm.streakwidget.domain.StreakCalculator
-import com.hkm.streakwidget.model.GoalType
 import com.hkm.streakwidget.model.Habit
+import com.hkm.streakwidget.model.VisualTheme
+import com.hkm.streakwidget.ui.components.CustomBonsai
 import com.hkm.streakwidget.ui.components.CustomFlame
 import com.hkm.streakwidget.ui.components.FlameState
 import com.hkm.streakwidget.ui.theme.AppIcons
@@ -85,7 +82,6 @@ class WidgetConfigurationActivity : ComponentActivity() {
         setContent {
             val activeHabits = remember { repository.getAllHabits().filterNot(Habit::isArchived) }
             val configuredHabitId = remember { repository.getWidgetHabitId(appWidgetId) }
-            val configuredStyle = remember { repository.getWidgetStyle(appWidgetId) }
             val language = remember { repository.getAppLanguage() }
             val baseContext = LocalContext.current
             val localizedContext = remember(language, baseContext) { baseContext.localizedFor(language) }
@@ -98,7 +94,6 @@ class WidgetConfigurationActivity : ComponentActivity() {
                     WidgetGoalPicker(
                         habits = activeHabits,
                         initiallySelectedHabitId = configuredHabitId,
-                        initiallySelectedStyle = configuredStyle,
                         onDismiss = ::finish,
                         onComplete = ::completeConfiguration,
                         onOpenApp = {
@@ -110,11 +105,11 @@ class WidgetConfigurationActivity : ComponentActivity() {
         }
     }
 
-    private fun completeConfiguration(habit: Habit, style: WidgetStyle) {
+    private fun completeConfiguration(habit: Habit) {
         repository.saveWidgetHabitId(appWidgetId, habit.id)
-        repository.saveWidgetStyle(appWidgetId, style)
+        repository.saveWidgetStyle(appWidgetId, WidgetStyle.FOCUS)
         repository.widgetActionToken(appWidgetId)
-        StreakAppWidgetProvider.updateWidget(this, appWidgetId)
+        runCatching { StreakAppWidgetProvider.updateWidget(this, appWidgetId) }
         setResult(
             RESULT_OK,
             Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
@@ -127,17 +122,10 @@ class WidgetConfigurationActivity : ComponentActivity() {
 private fun WidgetGoalPicker(
     habits: List<Habit>,
     initiallySelectedHabitId: String?,
-    initiallySelectedStyle: WidgetStyle,
     onDismiss: () -> Unit,
-    onComplete: (Habit, WidgetStyle) -> Unit,
+    onComplete: (Habit) -> Unit,
     onOpenApp: () -> Unit
 ) {
-    var selectedHabit by remember(habits, initiallySelectedHabitId) {
-        mutableStateOf(habits.firstOrNull { it.id == initiallySelectedHabitId })
-    }
-    var selectedStyle by remember(initiallySelectedStyle) { mutableStateOf(initiallySelectedStyle) }
-    var choosingStyle by remember { mutableStateOf(false) }
-
     Column(
         Modifier
             .fillMaxSize()
@@ -153,7 +141,7 @@ private fun WidgetGoalPicker(
             Column(Modifier.weight(1f)) {
                 Text(stringResource(R.string.config_eyebrow), color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.ExtraBold, fontSize = 11.sp, letterSpacing = 1.4.sp)
                 Text(
-                    stringResource(if (choosingStyle) R.string.config_title_style else R.string.config_title_goal),
+                    stringResource(R.string.config_title_goal),
                     color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 25.sp
@@ -188,7 +176,7 @@ private fun WidgetGoalPicker(
                     Text(stringResource(R.string.config_open_app), fontWeight = FontWeight.ExtraBold)
                 }
             }
-        } else if (!choosingStyle) {
+        } else {
             Text(
                 stringResource(
                     if (initiallySelectedHabitId == null) R.string.config_goal_hint_new else R.string.config_goal_hint_existing
@@ -204,58 +192,8 @@ private fun WidgetGoalPicker(
                 items(habits, key = Habit::id) { habit ->
                     WidgetGoalRow(
                         habit = habit,
-                        selected = habit.id == selectedHabit?.id,
-                        onClick = {
-                            selectedHabit = habit
-                            choosingStyle = true
-                        }
-                    )
-                }
-            }
-        } else {
-            val habit = selectedHabit ?: return@Column
-            Text(
-                stringResource(R.string.config_style_hint, habit.name),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 13.sp,
-                modifier = Modifier.padding(top = 18.dp, bottom = 14.dp)
-            )
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                items(WidgetStyle.entries, key = WidgetStyle::name) { style ->
-                    WidgetStylePreview(
-                        style = style,
-                        habit = habit,
-                        selected = style == selectedStyle,
-                        onClick = { selectedStyle = style }
-                    )
-                }
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 14.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Button(
-                    onClick = { choosingStyle = false },
-                    modifier = Modifier.weight(0.42f),
-                    shape = RoundedCornerShape(18.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = MaterialTheme.colorScheme.onSurface
-                    )
-                ) {
-                    Text(stringResource(R.string.config_back), fontWeight = FontWeight.ExtraBold)
-                }
-                Button(
-                    onClick = { onComplete(habit, selectedStyle) },
-                    modifier = Modifier.weight(0.58f),
-                    shape = RoundedCornerShape(18.dp)
-                ) {
-                    Text(
-                        stringResource(if (initiallySelectedHabitId == null) R.string.config_add else R.string.config_update),
-                        fontWeight = FontWeight.ExtraBold
+                        selected = habit.id == initiallySelectedHabitId,
+                        onClick = { onComplete(habit) }
                     )
                 }
             }
@@ -267,7 +205,7 @@ private fun WidgetGoalPicker(
 private fun WidgetGoalRow(habit: Habit, selected: Boolean, onClick: () -> Unit) {
     val today = StreakCalculator.todayString()
     val completed = today in habit.completionHistory
-    val streak = StreakCalculator.calculate(habit.completionHistory, habit.debts, today)
+    val streak = StreakCalculator.calculate(habit.completionHistory, habit.debts, today, habit.pausedDates)
     val flameState = when {
         completed -> FlameState.COMPLETED
         streak > 0 -> FlameState.ACTIVE
@@ -289,7 +227,16 @@ private fun WidgetGoalRow(habit: Habit, selected: Boolean, onClick: () -> Unit) 
             Modifier.padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            CustomFlame(flameState, modifier = Modifier.size(48.dp), flameColor = habit.widgetAccent())
+            if (habit.theme == VisualTheme.TREE) {
+                CustomBonsai(
+                    streakCount = streak,
+                    state = flameState,
+                    modifier = Modifier.size(48.dp),
+                    accentColor = habit.widgetAccent()
+                )
+            } else {
+                CustomFlame(flameState, modifier = Modifier.size(48.dp), flameColor = habit.widgetAccent())
+            }
             Spacer(Modifier.width(13.dp))
             Column(Modifier.weight(1f)) {
                 Text(habit.name, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -316,79 +263,6 @@ private fun WidgetGoalRow(habit: Habit, selected: Boolean, onClick: () -> Unit) 
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(18.dp)
             )
-        }
-    }
-}
-
-@Composable
-private fun WidgetStylePreview(
-    style: WidgetStyle,
-    habit: Habit,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    val today = StreakCalculator.todayString()
-    val streak = StreakCalculator.calculate(habit.completionHistory, habit.debts, today)
-    val title = stringResource(
-        when (style) {
-            WidgetStyle.EMBER -> R.string.config_style_ember
-            WidgetStyle.FOCUS -> R.string.config_style_focus
-            WidgetStyle.CHECKLIST -> R.string.config_style_checklist
-            WidgetStyle.POSTER -> R.string.config_style_poster
-        }
-    )
-    val description = stringResource(
-        when (style) {
-            WidgetStyle.EMBER -> R.string.config_style_ember_desc
-            WidgetStyle.FOCUS -> R.string.config_style_focus_desc
-            WidgetStyle.CHECKLIST -> if (habit.goalType == GoalType.CHECKLIST) {
-                R.string.config_style_checklist_desc
-            } else {
-                R.string.config_style_checklist_fallback
-            }
-            WidgetStyle.POSTER -> R.string.config_style_poster_desc
-        }
-    )
-
-    Surface(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).clickable(onClick = onClick),
-        shape = RoundedCornerShape(24.dp),
-        color = if (selected) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface,
-        border = BorderStroke(
-            if (selected) 2.dp else 1.dp,
-            if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outlineVariant
-        )
-    ) {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Surface(
-                modifier = Modifier.size(72.dp),
-                shape = RoundedCornerShape(20.dp),
-                color = MaterialTheme.colorScheme.background,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                    CustomFlame(
-                        if (today in habit.completionHistory) FlameState.COMPLETED else FlameState.ACTIVE,
-                        modifier = Modifier.size(if (style == WidgetStyle.POSTER) 43.dp else 35.dp),
-                        flameColor = habit.widgetAccent()
-                    )
-                    Text(
-                        streak.toString(),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = if (style == WidgetStyle.POSTER) 20.sp else 16.sp,
-                        fontWeight = FontWeight.ExtraBold
-                    )
-                }
-            }
-            Spacer(Modifier.width(13.dp))
-            Column(Modifier.weight(1f)) {
-                Text(title, color = MaterialTheme.colorScheme.onSurface, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
-                Spacer(Modifier.height(3.dp))
-                Text(description, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
-            }
-            if (selected) {
-                Text(stringResource(R.string.config_selected), color = MaterialTheme.colorScheme.onSurface, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold)
-            }
         }
     }
 }

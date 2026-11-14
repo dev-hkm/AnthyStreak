@@ -4,11 +4,11 @@
         <item name="android:fontFamily">@font/eb_garamond_family</item>
     </style>
 
-    <style name="WidgetTextDisplay">
-        <item name="android:fontFamily">@font/eb_garamond_extra_bold</item>
+    <style name="WidgetTextDisplay" parent="WidgetText">
+        <item name="android:textStyle">bold</item>
     </style>
 
-    <style name="WidgetTextMeta">
-        <item name="android:fontFamily">@font/eb_garamond_semi_bold</item>
+    <style name="WidgetTextMeta" parent="WidgetText">
+        <item name="android:textStyle">bold</item>
     </style>
 </resources>

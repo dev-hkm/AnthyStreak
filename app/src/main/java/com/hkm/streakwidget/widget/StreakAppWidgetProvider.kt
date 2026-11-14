@@ -102,30 +102,63 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
 
             val state = WidgetRenderStateFactory.create(habit, StreakCalculator.todayString(), labels)
             val options = manager.getAppWidgetOptions(widgetId)
-            val selectedStyle = repository.getWidgetStyle(widgetId)
-            val views = createResponsiveViews(
-                context = localizedContext,
-                widgetId = widgetId,
-                options = options,
-                habit = habit,
-                state = state,
-                selectedStyle = selectedStyle,
-                repository = repository
-            )
+            val unifiedStyle = WidgetStyle.FOCUS
             try {
-                manager.updateAppWidget(widgetId, views)
-            } catch (_: RuntimeException) {
-                val fallback = createSingleFallbackViews(
+                val views = createResponsiveViews(
                     context = localizedContext,
                     widgetId = widgetId,
                     options = options,
                     habit = habit,
                     state = state,
-                    selectedStyle = selectedStyle,
+                    selectedStyle = unifiedStyle,
                     repository = repository
                 )
-                manager.updateAppWidget(widgetId, fallback)
+                manager.updateAppWidget(widgetId, views)
+            } catch (_: Throwable) {
+                runCatching {
+                    val fallback = createSingleFallbackViews(
+                        context = localizedContext,
+                        widgetId = widgetId,
+                        options = options,
+                        habit = habit,
+                        state = state,
+                        selectedStyle = unifiedStyle,
+                        repository = repository
+                    )
+                    manager.updateAppWidget(widgetId, fallback)
+                }.onFailure {
+                    runCatching {
+                        manager.updateAppWidget(
+                            widgetId,
+                            createMinimalSafeViews(localizedContext, widgetId, habit, state, repository)
+                        )
+                    }
+                }
             }
+        }
+    }
+
+    private fun createMinimalSafeViews(
+        context: Context,
+        widgetId: Int,
+        habit: Habit?,
+        state: WidgetRenderState,
+        repository: HabitRepository
+    ): RemoteViews {
+        val openIntent = openAppIntent(context, widgetId, habit?.id)
+        val primaryIntent = if (state.primaryAction == WidgetPrimaryAction.CHECK_IN && habit != null) {
+            checkInIntent(context, repository, widgetId, habit.id)
+        } else {
+            openIntent
+        }
+        return RemoteViews(context.packageName, R.layout.widget_layout).apply {
+            setTextViewText(R.id.widget_streak_count, state.streak.toString())
+            setTextViewText(R.id.widget_streak_label, state.streakLabel)
+            setTextViewText(R.id.widget_habit_name, state.title)
+            setTextViewText(R.id.widget_status, state.status)
+            setTextViewText(R.id.widget_check_in, state.actionLabel)
+            setOnClickPendingIntent(R.id.widget_background, openIntent)
+            setOnClickPendingIntent(R.id.widget_check_in, primaryIntent)
         }
     }
 
@@ -280,9 +313,6 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
             streak = state.streak
         )
         views.setImageViewBitmap(R.id.widget_flame_outer, heroBitmap)
-        views.setViewVisibility(R.id.widget_flame_glow, View.GONE)
-        views.setViewVisibility(R.id.widget_flame_mid, View.GONE)
-        views.setViewVisibility(R.id.widget_flame_inner, View.GONE)
 
         val streakLabelText = if (plan.useLongStreakLabel) state.longStreakLabel else state.streakLabel
         views.setTextViewText(
@@ -339,7 +369,6 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
         setBoundedTextSize(R.id.widget_status, plan.statusSp)
         setBoundedTextSize(R.id.widget_task_progress, plan.statusSp)
         setBoundedTextSize(R.id.widget_check_in, plan.actionSp)
-        views.setInt(R.id.widget_habit_name, "setMaxLines", plan.nameMaxLines)
 
         val isPendingCheckIn = state.primaryAction == WidgetPrimaryAction.CHECK_IN
         views.setInt(
@@ -363,48 +392,11 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
         views.setViewVisibility(R.id.widget_check_in, if (plan.showAction) View.VISIBLE else View.GONE)
 
         val showDetailContainer = plan.showEyebrow || plan.showName || plan.showStatus || plan.showProgress
-        if (plan.structure == WidgetStructure.STRIP_ROW ||
-            plan.structure == WidgetStructure.POSTER_STACK ||
-            plan.structure == WidgetStructure.HERO
-        ) {
+        if (plan.structure == WidgetStructure.STRIP_ROW || plan.structure == WidgetStructure.HERO) {
             views.setViewVisibility(
                 R.id.widget_detail_box,
                 if (showDetailContainer) View.VISIBLE else View.GONE
             )
-        }
-
-        if (plan.structure == WidgetStructure.COLUMN) {
-            val spacerVis = if (plan.useBalanceSpacers) View.VISIBLE else View.GONE
-            views.setViewVisibility(R.id.widget_top_spacer, spacerVis)
-            views.setViewVisibility(R.id.widget_bottom_spacer, spacerVis)
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (plan.showAction) {
-                views.setViewLayoutHeight(
-                    R.id.widget_check_in,
-                    plan.actionHeightDp.toFloat(),
-                    TypedValue.COMPLEX_UNIT_DIP
-                )
-            }
-            if (plan.structure == WidgetStructure.STRIP_ROW) {
-                views.setViewLayoutWidth(
-                    R.id.widget_flame_box,
-                    plan.flameSizeDp.toFloat(),
-                    TypedValue.COMPLEX_UNIT_DIP
-                )
-            }
-            if (plan.structure == WidgetStructure.HERO ||
-                plan.structure == WidgetStructure.COMPACT_SPLIT ||
-                plan.structure == WidgetStructure.STRIP_ROW
-            ) {
-                views.setViewLayoutMargin(
-                    R.id.widget_detail_box,
-                    RemoteViews.MARGIN_START,
-                    plan.gapDp.toFloat(),
-                    TypedValue.COMPLEX_UNIT_DIP
-                )
-            }
         }
     }
 
@@ -443,7 +435,7 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
 
         val settledState = WidgetRenderStateFactory.create(updatedTarget, today, labels)
         try {
-            playIgnitionFrames(localizedContext, widgetId, settledState, repository.getWidgetStyle(widgetId))
+            playIgnitionFrames(localizedContext, widgetId, settledState, WidgetStyle.FOCUS)
         } finally {
             updateAllWidgets(context)
         }
@@ -487,9 +479,6 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
             val partial = RemoteViews(context.packageName, plan.structure.layoutRes()).apply {
                 if (index == 0) {
                     setImageViewBitmap(R.id.widget_flame_outer, heroBitmap)
-                    setViewVisibility(R.id.widget_flame_glow, View.GONE)
-                    setViewVisibility(R.id.widget_flame_mid, View.GONE)
-                    setViewVisibility(R.id.widget_flame_inner, View.GONE)
                     setTextViewText(R.id.widget_streak_count, state.streak.toString())
                     setTextViewText(R.id.widget_streak_label, labelText)
                     setTextViewText(R.id.widget_status, state.status)
@@ -502,7 +491,7 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
                 }
                 setInt(R.id.widget_flame_outer, "setImageAlpha", animFrame.outerAlpha)
             }
-            manager.partiallyUpdateAppWidget(widgetId, partial)
+            runCatching { manager.partiallyUpdateAppWidget(widgetId, partial) }
         }
     }
 
@@ -610,6 +599,5 @@ private fun WidgetStructure.layoutRes(): Int = when (this) {
     WidgetStructure.COMPACT_SPLIT -> R.layout.widget_layout_compact_split
     WidgetStructure.COLUMN -> R.layout.widget_layout_column
     WidgetStructure.SQUARE -> R.layout.widget_layout_square
-    WidgetStructure.POSTER_STACK -> R.layout.widget_layout_poster
     WidgetStructure.HERO -> R.layout.widget_layout_hero
 }

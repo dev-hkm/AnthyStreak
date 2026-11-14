@@ -15,7 +15,6 @@ internal enum class WidgetStructure {
     COMPACT_SPLIT,
     COLUMN,
     SQUARE,
-    POSTER_STACK,
     HERO
 }
 
@@ -128,21 +127,14 @@ internal object WidgetLayoutSpec {
                 WidgetStructure.COLUMN
 
             width >= 104 && height < 94 ->
-                if (style != WidgetStyle.EMBER && width in 118..175 && height >= 64) {
+                if (width in 118..175 && height >= 64) {
                     WidgetStructure.COMPACT_SPLIT
                 } else {
                     WidgetStructure.STRIP_ROW
                 }
 
             width >= 176 && height >= 94 && width >= height * 1.38f ->
-                when {
-                    style == WidgetStyle.EMBER && width >= height * 1.65f -> WidgetStructure.STRIP_ROW
-                    style == WidgetStyle.EMBER -> WidgetStructure.POSTER_STACK
-                    else -> WidgetStructure.HERO
-                }
-
-            style == WidgetStyle.EMBER || style == WidgetStyle.POSTER ->
-                WidgetStructure.POSTER_STACK
+                WidgetStructure.HERO
 
             else ->
                 WidgetStructure.SQUARE
@@ -314,16 +306,14 @@ internal object WidgetLayoutSpec {
                 val pad = (min(width, height) * 0.085f).roundToInt().coerceIn(5, 16)
                 val innerW = (width - pad * 2).toFloat()
                 val innerH = (height - pad * 2).toFloat()
-                val isEmber = effectiveStyle == WidgetStyle.EMBER
-                val isPoster = effectiveStyle == WidgetStyle.POSTER
                 val showLabel = width >= 54
-                val showName = !isEmber && height >= 112
-                val showEyebrow = showName && !isPoster && width >= 110 && height >= 195
+                val showName = height >= 112
+                val showEyebrow = showName && width >= 110 && height >= 195
                 val showProgress = showName && effectiveStyle == WidgetStyle.CHECKLIST && hasChecklist && height >= 162 && width >= 72
-                val showStatus = showName && !isPoster && height >= 172 && width >= 76 && (!showProgress || height >= 218)
-                val showAction = !isEmber && width >= 62 && height >= 132
+                val showStatus = showName && height >= 172 && width >= 76 && (!showProgress || height >= 218)
+                val showAction = width >= 62 && height >= 132
                 val nameMaxLines = if (showName && height >= 148 && width >= 82) 2 else 1
-                val countTarget = min(innerW * 0.34f, innerH * 0.18f) * (if (isPoster) 1.15f else 1f)
+                val countTarget = min(innerW * 0.34f, innerH * 0.18f)
                 val actionH = (innerH * 0.15f).roundToInt().coerceIn(24, 38)
                 WidgetPlan(
                     structure = structure,
@@ -386,57 +376,20 @@ internal object WidgetLayoutSpec {
                 )
             }
 
-            WidgetStructure.POSTER_STACK -> {
-                val minSide = min(width, height)
-                val pad = (minSide * 0.08f).roundToInt().coerceIn(7, 20)
-                val innerW = (width - pad * 2).toFloat()
-                val innerH = (height - pad * 2).toFloat()
-                val isPoster = effectiveStyle == WidgetStyle.POSTER
-                val showName = isPoster
-                val showStatus = isPoster && height >= 168
-                val showAction = isPoster && height >= 126
-                val nameMaxLines = if (isPoster && height >= 195) 2 else 1
-                val actionH = (innerH * 0.18f).roundToInt().coerceIn(24, 40)
-                WidgetPlan(
-                    structure = structure,
-                    paddingDp = pad,
-                    gapDp = 6,
-                    flameSizeDp = min(innerW * 0.72f, innerH * 0.48f).roundToInt().coerceAtLeast(40),
-                    compactCorners = false,
-                    useBalanceSpacers = false,
-                    useLongStreakLabel = width >= 110,
-                    showLabel = true,
-                    showEyebrow = false,
-                    showName = showName,
-                    showStatus = showStatus,
-                    showProgress = false,
-                    showAction = showAction,
-                    nameMaxLines = nameMaxLines,
-                    countSp = fitNumericSp(min(innerW * 0.27f, innerH * 0.25f), innerW, digits, 18f, 54f),
-                    labelSp = (minSide * 0.068f).coerceIn(7.5f, 11.5f),
-                    eyebrowSp = 8f,
-                    nameSp = (minSide * 0.105f).coerceIn(11f, 19f),
-                    statusSp = (minSide * 0.065f).coerceIn(7.5f, 11f),
-                    actionSp = fitLabelSp((minSide * 0.074f).coerceIn(8f, 11.5f), innerW - 14f, actionChars, 7f, 11.5f),
-                    actionHeightDp = actionH
-                )
-            }
-
             WidgetStructure.HERO -> {
                 val minSide = min(width, height)
                 val pad = (minSide * 0.095f).roundToInt().coerceIn(9, 22)
                 val innerW = (width - pad * 2).toFloat()
                 val innerH = (height - pad * 2).toFloat()
                 val gap = (width * 0.045f).roundToInt().coerceIn(8, 18)
-                val isPoster = effectiveStyle == WidgetStyle.POSTER
                 val leftW = (innerW - gap) * (0.9f / 2.4f)
                 val rightW = (innerW - gap) * (1.5f / 2.4f)
-                val showEyebrow = !isPoster && height >= 112
+                val showEyebrow = height >= 112
                 val showProgress = effectiveStyle == WidgetStyle.CHECKLIST && hasChecklist
-                val showStatus = !isPoster && (!showProgress || height >= 138)
+                val showStatus = !showProgress || height >= 138
                 val nameMaxLines = if (height >= 126) 2 else 1
                 val actionH = (innerH * 0.26f).roundToInt().coerceIn(28, 44)
-                val countTarget = min(leftW * 0.42f, innerH * 0.28f) * (if (isPoster) 1.12f else 1f)
+                val countTarget = min(leftW * 0.42f, innerH * 0.28f)
                 WidgetPlan(
                     structure = structure,
                     paddingDp = pad,
@@ -495,8 +448,4 @@ internal fun resolvedStyle(
     heightDp: Int,
     selected: WidgetStyle,
     hasChecklist: Boolean
-): WidgetStyle = when {
-    widthDp < 104 && heightDp < 94 -> WidgetStyle.EMBER
-    selected == WidgetStyle.CHECKLIST && !hasChecklist -> WidgetStyle.FOCUS
-    else -> selected
-}
+): WidgetStyle = if (hasChecklist) WidgetStyle.CHECKLIST else WidgetStyle.FOCUS

@@ -16,44 +16,14 @@
         android:gravity="center"
         android:orientation="horizontal">
 
-        <FrameLayout
-            android:id="@+id/widget_flame_box"
+        <ImageView
+            android:id="@+id/widget_flame_outer"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1.05">
-
-            <ImageView
-                android:id="@+id/widget_flame_glow"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:contentDescription="@null"
-                android:scaleType="fitCenter"
-                android:src="@drawable/widget_flame_glow" />
-
-            <ImageView
-                android:id="@+id/widget_flame_outer"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:contentDescription="@null"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_widget_flame_outer" />
-
-            <ImageView
-                android:id="@+id/widget_flame_mid"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:contentDescription="@null"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_widget_flame_mid" />
-
-            <ImageView
-                android:id="@+id/widget_flame_inner"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:contentDescription="@null"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_widget_flame_inner" />
-        </FrameLayout>
+            android:layout_weight="1.05"
+            android:contentDescription="@null"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_widget_flame_outer" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -73,8 +43,7 @@
                 android:maxLines="1"
                 android:text="@string/widget_preview_count"
                 android:textColor="@color/widget_text_primary"
-                android:textSize="28sp"
-                android:textStyle="bold" />
+                android:textSize="28sp" />
 
             <TextView
                 android:id="@+id/widget_streak_label"
@@ -88,8 +57,7 @@
                 android:maxLines="1"
                 android:text="@string/widget_preview_days"
                 android:textColor="@color/widget_text_muted"
-                android:textSize="8sp"
-                android:textStyle="bold" />
+                android:textSize="8sp" />
         </LinearLayout>
     </LinearLayout>
 
@@ -115,7 +83,6 @@
             android:text="@string/widget_preview_today"
             android:textColor="@color/widget_text_muted"
             android:textSize="8sp"
-            android:textStyle="bold"
             android:visibility="gone" />
 
         <TextView
@@ -129,8 +96,7 @@
             android:maxLines="1"
             android:text="@string/widget_preview_goal"
             android:textColor="@color/widget_text_primary"
-            android:textSize="14sp"
-            android:textStyle="bold" />
+            android:textSize="14sp" />
 
         <TextView
             android:id="@+id/widget_status"
@@ -144,8 +110,7 @@
             android:maxLines="1"
             android:text="@string/widget_preview_status"
             android:textColor="@color/widget_text_muted"
-            android:textSize="8.5sp"
-            android:textStyle="bold" />
+            android:textSize="8.5sp" />
 
         <TextView
             android:id="@+id/widget_task_progress"
@@ -159,7 +124,6 @@
             android:maxLines="1"
             android:textColor="@color/widget_text_muted"
             android:textSize="8.5sp"
-            android:textStyle="bold"
             android:visibility="gone" />
     </LinearLayout>
 
@@ -177,6 +141,5 @@
         android:paddingHorizontal="8dp"
         android:text="@string/widget_preview_check_in"
         android:textColor="@color/widget_action_text"
-        android:textSize="9.5sp"
-        android:textStyle="bold" />
+        android:textSize="9.5sp" />
 </LinearLayout>
