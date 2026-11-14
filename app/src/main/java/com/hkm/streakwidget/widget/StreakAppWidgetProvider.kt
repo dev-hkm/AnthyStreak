@@ -101,17 +101,61 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
             if (habit != null && mappedHabit == null) repository.saveWidgetHabitId(widgetId, habit.id)
 
             val state = WidgetRenderStateFactory.create(habit, StreakCalculator.todayString(), labels)
+            val options = manager.getAppWidgetOptions(widgetId)
+            val selectedStyle = repository.getWidgetStyle(widgetId)
             val views = createResponsiveViews(
                 context = localizedContext,
                 widgetId = widgetId,
-                options = manager.getAppWidgetOptions(widgetId),
+                options = options,
                 habit = habit,
                 state = state,
-                selectedStyle = repository.getWidgetStyle(widgetId),
+                selectedStyle = selectedStyle,
                 repository = repository
             )
-            manager.updateAppWidget(widgetId, views)
+            try {
+                manager.updateAppWidget(widgetId, views)
+            } catch (_: RuntimeException) {
+                val fallback = createSingleFallbackViews(
+                    context = localizedContext,
+                    widgetId = widgetId,
+                    options = options,
+                    habit = habit,
+                    state = state,
+                    selectedStyle = selectedStyle,
+                    repository = repository
+                )
+                manager.updateAppWidget(widgetId, fallback)
+            }
         }
+    }
+
+    private fun createSingleFallbackViews(
+        context: Context,
+        widgetId: Int,
+        options: Bundle,
+        habit: Habit?,
+        state: WidgetRenderState,
+        selectedStyle: WidgetStyle,
+        repository: HabitRepository
+    ): RemoteViews {
+        val openIntent = openAppIntent(context, widgetId, habit?.id)
+        val primaryIntent = if (state.primaryAction == WidgetPrimaryAction.CHECK_IN && habit != null) {
+            checkInIntent(context, repository, widgetId, habit.id)
+        } else {
+            openIntent
+        }
+        val minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0)
+        val minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0)
+        return createViewsForFrame(
+            context = context,
+            widthDp = minWidth,
+            heightDp = minHeight,
+            habit = habit,
+            state = state,
+            selectedStyle = selectedStyle,
+            openIntent = openIntent,
+            primaryIntent = primaryIntent
+        )
     }
 
     private fun createResponsiveViews(
@@ -228,16 +272,17 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
 
         // Match FocusCard in MainScreen.kt: the flame/bonsai lights up vividly only once today is completed.
         val lit = state.visualState != WidgetVisualState.EMPTY && state.isCompleted
-        val heroLayers = WidgetFlameRenderer.layers(
-            accent = Color.parseColor(state.accentHex),
+        val accentColor = runCatching { Color.parseColor(state.accentHex) }.getOrDefault(0xFFFF6D00.toInt())
+        val heroBitmap = WidgetFlameRenderer.composite(
+            accent = accentColor,
             lit = lit,
             theme = state.theme,
             streak = state.streak
         )
-        views.setImageViewBitmap(R.id.widget_flame_glow, heroLayers.glow)
-        views.setImageViewBitmap(R.id.widget_flame_outer, heroLayers.outer)
-        views.setImageViewBitmap(R.id.widget_flame_mid, heroLayers.mid)
-        views.setImageViewBitmap(R.id.widget_flame_inner, heroLayers.inner)
+        views.setImageViewBitmap(R.id.widget_flame_outer, heroBitmap)
+        views.setViewVisibility(R.id.widget_flame_glow, View.GONE)
+        views.setViewVisibility(R.id.widget_flame_mid, View.GONE)
+        views.setViewVisibility(R.id.widget_flame_inner, View.GONE)
 
         val streakLabelText = if (plan.useLongStreakLabel) state.longStreakLabel else state.streakLabel
         views.setTextViewText(
@@ -425,8 +470,8 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
             actionCharCount = state.actionLabel.length
         )
 
-        val accent = Color.parseColor(state.accentHex)
-        val heroLayers = WidgetFlameRenderer.layers(
+        val accent = runCatching { Color.parseColor(state.accentHex) }.getOrDefault(0xFFFF6D00.toInt())
+        val heroBitmap = WidgetFlameRenderer.composite(
             accent = accent,
             lit = true,
             theme = state.theme,
@@ -441,10 +486,10 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
 
             val partial = RemoteViews(context.packageName, plan.structure.layoutRes()).apply {
                 if (index == 0) {
-                    setImageViewBitmap(R.id.widget_flame_glow, heroLayers.glow)
-                    setImageViewBitmap(R.id.widget_flame_outer, heroLayers.outer)
-                    setImageViewBitmap(R.id.widget_flame_mid, heroLayers.mid)
-                    setImageViewBitmap(R.id.widget_flame_inner, heroLayers.inner)
+                    setImageViewBitmap(R.id.widget_flame_outer, heroBitmap)
+                    setViewVisibility(R.id.widget_flame_glow, View.GONE)
+                    setViewVisibility(R.id.widget_flame_mid, View.GONE)
+                    setViewVisibility(R.id.widget_flame_inner, View.GONE)
                     setTextViewText(R.id.widget_streak_count, state.streak.toString())
                     setTextViewText(R.id.widget_streak_label, labelText)
                     setTextViewText(R.id.widget_status, state.status)
@@ -455,10 +500,7 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
                         ContextCompat.getColor(context, R.color.widget_action_completed_text)
                     )
                 }
-                setInt(R.id.widget_flame_glow, "setImageAlpha", animFrame.glowAlpha)
                 setInt(R.id.widget_flame_outer, "setImageAlpha", animFrame.outerAlpha)
-                setInt(R.id.widget_flame_mid, "setImageAlpha", animFrame.midAlpha)
-                setInt(R.id.widget_flame_inner, "setImageAlpha", animFrame.innerAlpha)
             }
             manager.partiallyUpdateAppWidget(widgetId, partial)
         }

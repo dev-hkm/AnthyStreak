@@ -34,7 +34,33 @@ internal object WidgetFlameRenderer {
     private const val OUTER_SIZE = 120
     private const val MID_SIZE = 104
     private const val INNER_SIZE = 88
+    private const val COMPOSITE_SIZE = 80
     private val cache = LinkedHashMap<String, WidgetFlameLayers>(20, 0.75f, true)
+    private val compositeCache = LinkedHashMap<String, Bitmap>(20, 0.75f, true)
+
+    @Synchronized
+    fun composite(
+        @ColorInt accent: Int,
+        lit: Boolean,
+        theme: VisualTheme = VisualTheme.FLAME,
+        streak: Int = 0
+    ): Bitmap {
+        val stage = if (theme == VisualTheme.TREE) BonsaiGrowthStage.fromStreak(streak) else null
+        val key = "comp:${theme.name}:${stage?.name.orEmpty()}:$accent:$lit"
+        compositeCache[key]?.let { return it }
+        val layerSet = layers(accent, lit, theme, streak)
+        val merged = bitmap(COMPOSITE_SIZE) { canvas, size ->
+            val dst = RectF(0f, 0f, size.toFloat(), size.toFloat())
+            val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+            canvas.drawBitmap(layerSet.glow, null, dst, paint)
+            canvas.drawBitmap(layerSet.outer, null, dst, paint)
+            canvas.drawBitmap(layerSet.mid, null, dst, paint)
+            canvas.drawBitmap(layerSet.inner, null, dst, paint)
+        }
+        if (compositeCache.size >= 16) compositeCache.remove(compositeCache.keys.first())
+        compositeCache[key] = merged
+        return merged
+    }
 
     @Synchronized
     fun layers(

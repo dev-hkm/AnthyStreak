@@ -63,22 +63,16 @@ internal object WidgetLayoutSpec {
     const val DEFAULT_WIDTH_DP = 140
     const val DEFAULT_HEIGHT_DP = 140
 
-    /** Canonical grid of aspect ratios so API 31+ resize drags transition smoothly. */
+    /** Canonical grid of aspect ratios so API 31+ resize drags transition smoothly within IPC limits. */
     val canonicalFrames: List<WidgetFrame> = listOf(
         WidgetFrame(56, 48),
         WidgetFrame(68, 68),
-        WidgetFrame(110, 48),
         WidgetFrame(140, 74),
-        WidgetFrame(180, 56),
         WidgetFrame(270, 58),
-        WidgetFrame(68, 136),
-        WidgetFrame(68, 220),
-        WidgetFrame(118, 118),
-        WidgetFrame(120, 195),
-        WidgetFrame(175, 175),
-        WidgetFrame(195, 115),
-        WidgetFrame(270, 140),
-        WidgetFrame(270, 240)
+        WidgetFrame(68, 160),
+        WidgetFrame(120, 120),
+        WidgetFrame(180, 180),
+        WidgetFrame(270, 140)
     )
 
     /**

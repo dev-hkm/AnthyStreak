@@ -18,6 +18,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -274,14 +275,15 @@ fun MainScreen(viewModel: StreakViewModel) {
                     targetState = tab,
                     modifier = Modifier.fillMaxSize(),
                     transitionSpec = {
+                        val navEase = CubicBezierEasing(0.22f, 1f, 0.36f, 1f)
                         when {
                             reduceMotion -> fadeIn(tween(180)) togetherWith fadeOut(tween(120))
                             targetState.ordinal > initialState.ordinal ->
-                                (slideInHorizontally(tween(430, easing = FastOutSlowInEasing)) { it / 5 } + fadeIn(tween(240))) togetherWith
-                                    (slideOutHorizontally(tween(250)) { -it / 8 } + fadeOut(tween(180)))
+                                (slideInHorizontally(tween(340, easing = navEase)) { it / 10 } + fadeIn(tween(260, easing = navEase))) togetherWith
+                                    (slideOutHorizontally(tween(260, easing = navEase)) { -it / 12 } + fadeOut(tween(180)))
                             else ->
-                                (slideInHorizontally(tween(430, easing = FastOutSlowInEasing)) { -it / 5 } + fadeIn(tween(240))) togetherWith
-                                    (slideOutHorizontally(tween(250)) { it / 8 } + fadeOut(tween(180)))
+                                (slideInHorizontally(tween(340, easing = navEase)) { -it / 10 } + fadeIn(tween(260, easing = navEase))) togetherWith
+                                    (slideOutHorizontally(tween(260, easing = navEase)) { it / 12 } + fadeOut(tween(180)))
                         }
                     },
                     label = "main_tab_slide"
@@ -503,6 +505,12 @@ fun MainScreen(viewModel: StreakViewModel) {
 
 @Composable
 private fun BottomTabToggle(selected: AppTab, onSelect: (AppTab) -> Unit) {
+    val navEase = remember { CubicBezierEasing(0.22f, 1f, 0.36f, 1f) }
+    val indicatorProgress by animateFloatAsState(
+        targetValue = if (selected == AppTab.TODAY) 0f else 1f,
+        animationSpec = tween(durationMillis = 360, easing = navEase),
+        label = "tab_indicator_progress"
+    )
     Box(
         Modifier
             .fillMaxWidth()
@@ -518,17 +526,15 @@ private fun BottomTabToggle(selected: AppTab, onSelect: (AppTab) -> Unit) {
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(30.dp))
         ) {
             val segmentWidth = (maxWidth - 10.dp) / 2
-            val indicatorTarget = if (selected == AppTab.TODAY) 5.dp else segmentWidth + 5.dp
-            val indicatorOffset by animateDpAsState(
-                targetValue = indicatorTarget,
-                animationSpec = spring(dampingRatio = 0.72f, stiffness = Spring.StiffnessMediumLow),
-                label = "tab_indicator_spring"
-            )
-            val boundedIndicatorOffset = boundedTabIndicatorOffset(indicatorOffset, segmentWidth)
+            val density = androidx.compose.ui.platform.LocalDensity.current
+            val padPx = with(density) { 5.dp.toPx() }
+            val segmentPx = with(density) { segmentWidth.toPx() }
             Box(
                 Modifier
                     .align(Alignment.CenterStart)
-                    .offset(x = boundedIndicatorOffset)
+                    .graphicsLayer {
+                        translationX = padPx + (indicatorProgress * segmentPx).coerceIn(0f, segmentPx)
+                    }
                     .width(segmentWidth)
                     .height(48.dp)
                     .clip(RoundedCornerShape(25.dp))
@@ -562,21 +568,27 @@ private fun BottomTabToggleItem(
     modifier: Modifier,
     onClick: () -> Unit
 ) {
+    val navEase = remember { CubicBezierEasing(0.22f, 1f, 0.36f, 1f) }
+    val interactionSource = remember { MutableInteractionSource() }
     val tint by animateColorAsState(
         targetValue = if (selected) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onSurfaceVariant,
-        animationSpec = tween(170),
+        animationSpec = tween(durationMillis = 320, easing = navEase),
         label = "tab_label_color"
     )
     val scale by animateFloatAsState(
         targetValue = if (selected) 1f else 0.96f,
-        animationSpec = spring(dampingRatio = 0.78f, stiffness = Spring.StiffnessMedium),
+        animationSpec = tween(durationMillis = 320, easing = navEase),
         label = "tab_label_scale"
     )
     Row(
         modifier
             .fillMaxHeight()
             .clip(RoundedCornerShape(25.dp))
-            .clickable(onClick = onClick)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            )
             .graphicsLayer(scaleX = scale, scaleY = scale),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
