@@ -10,51 +10,113 @@ import org.junit.Test
 
 class WidgetLayoutSpecTest {
     @Test
-    fun `classifier exposes all eight exact responsive buckets`() {
-        assertEquals(WidgetSize.TILE, WidgetLayoutSpec.classify(56, 56))
-        assertEquals(WidgetSize.STRIP, WidgetLayoutSpec.classify(112, 48))
-        assertEquals(WidgetSize.TALL, WidgetLayoutSpec.classify(72, 200))
-        assertEquals(WidgetSize.COMPACT, WidgetLayoutSpec.classify(112, 88))
-        assertEquals(WidgetSize.WIDE, WidgetLayoutSpec.classify(240, 88))
-        assertEquals(WidgetSize.SQUARE, WidgetLayoutSpec.classify(112, 120))
-        assertEquals(WidgetSize.TALL_HERO, WidgetLayoutSpec.classify(112, 168))
-        assertEquals(WidgetSize.HERO, WidgetLayoutSpec.classify(240, 168))
+    fun `structure selector covers all eight topologies across crop aspect ratios`() {
+        assertEquals(WidgetStructure.MICRO_ROW, WidgetLayoutSpec.structureFor(68, 48))
+        assertEquals(WidgetStructure.MICRO_STACK, WidgetLayoutSpec.structureFor(68, 72))
+        assertEquals(WidgetStructure.STRIP_ROW, WidgetLayoutSpec.structureFor(180, 56))
+        assertEquals(WidgetStructure.COMPACT_SPLIT, WidgetLayoutSpec.structureFor(140, 76))
+        assertEquals(WidgetStructure.COLUMN, WidgetLayoutSpec.structureFor(68, 180))
+        assertEquals(WidgetStructure.SQUARE, WidgetLayoutSpec.structureFor(140, 140))
+        assertEquals(WidgetStructure.POSTER_STACK, WidgetLayoutSpec.structureFor(140, 140, WidgetStyle.POSTER))
+        assertEquals(WidgetStructure.HERO, WidgetLayoutSpec.structureFor(240, 140))
     }
 
     @Test
-    fun `classifier handles tall and wide dimensions independently`() {
-        assertEquals(WidgetSize.TALL_HERO, WidgetLayoutSpec.classify(112, 240))
-        assertEquals(WidgetSize.WIDE, WidgetLayoutSpec.classify(320, 88))
-        assertEquals(WidgetSize.STRIP, WidgetLayoutSpec.classify(240, 60))
-        assertEquals(WidgetSize.TALL, WidgetLayoutSpec.classify(72, 96))
-        assertEquals(WidgetSize.TILE, WidgetLayoutSpec.classify(72, 64))
+    fun `missing launcher dimensions fall back to square default frame`() {
+        val frames = WidgetLayoutSpec.responsiveFrames(
+            launcherFrames = emptyList(),
+            fallbackWidthDp = 0,
+            fallbackHeightDp = 0
+        )
+        assertTrue(frames.contains(WidgetFrame(WidgetLayoutSpec.DEFAULT_WIDTH_DP, WidgetLayoutSpec.DEFAULT_HEIGHT_DP)))
+        assertEquals(WidgetStructure.SQUARE, WidgetLayoutSpec.structureFor(0, 0))
     }
 
     @Test
-    fun `responsive variants cover every bucket once`() {
-        assertEquals(WidgetSize.entries.toSet(), WidgetLayoutSpec.responsiveSizes.toSet())
-        assertEquals(WidgetSize.entries.size, WidgetLayoutSpec.responsiveSizes.size)
+    fun `responsiveFrames preserves exact launcher sizes without duplicating close anchors`() {
+        val exact = listOf(WidgetFrame(140, 140), WidgetFrame(270, 140))
+        val merged = WidgetLayoutSpec.responsiveFrames(
+            launcherFrames = exact,
+            fallbackWidthDp = 140,
+            fallbackHeightDp = 140
+        )
+        assertEquals(WidgetFrame(140, 140), merged[0])
+        assertEquals(WidgetFrame(270, 140), merged[1])
+        assertFalse(merged.contains(WidgetFrame(139, 139)))
+        assertEquals(WidgetFrame(270, 140), WidgetLayoutSpec.closestFrame(merged, 272, 138))
     }
 
     @Test
-    fun `missing launcher dimensions use a useful compact fallback`() {
-        assertEquals(WidgetSize.COMPACT, WidgetLayoutSpec.classify(0, 0))
+    fun `micro and digit scaling prevent clipping at 1x1 and 4-digit streaks`() {
+        val tinyOneDigit = WidgetLayoutSpec.plan(
+            widthDp = 56,
+            heightDp = 48,
+            style = WidgetStyle.FOCUS,
+            hasChecklist = false,
+            countDigits = 1
+        )
+        val tinyFourDigits = WidgetLayoutSpec.plan(
+            widthDp = 56,
+            heightDp = 48,
+            style = WidgetStyle.FOCUS,
+            hasChecklist = false,
+            countDigits = 4
+        )
+        assertEquals(WidgetStructure.MICRO_ROW, tinyOneDigit.structure)
+        assertFalse(tinyOneDigit.showName)
+        assertFalse(tinyOneDigit.showAction)
+        assertTrue(tinyFourDigits.countSp < tinyOneDigit.countSp)
+        assertTrue(tinyFourDigits.flameSizeDp >= 24)
     }
 
     @Test
-    fun `poster selection falls back to ember for sizes without a detail hierarchy`() {
-        assertEquals(WidgetStyle.EMBER, resolvedStyle(WidgetSize.TILE, WidgetStyle.POSTER, hasChecklist = false))
-        assertEquals(WidgetStyle.EMBER, resolvedStyle(WidgetSize.STRIP, WidgetStyle.POSTER, hasChecklist = false))
-        assertEquals(WidgetStyle.POSTER, resolvedStyle(WidgetSize.WIDE, WidgetStyle.POSTER, hasChecklist = false))
-        assertEquals(WidgetStyle.POSTER, resolvedStyle(WidgetSize.HERO, WidgetStyle.POSTER, hasChecklist = false))
+    fun `strip and tall column crops rearrange elements proportionally`() {
+        val wideStrip = WidgetLayoutSpec.plan(260, 58, WidgetStyle.FOCUS, hasChecklist = false)
+        assertEquals(WidgetStructure.STRIP_ROW, wideStrip.structure)
+        assertTrue(wideStrip.showName)
+        assertTrue(wideStrip.showAction)
+
+        val tightStrip = WidgetLayoutSpec.plan(110, 48, WidgetStyle.FOCUS, hasChecklist = false)
+        assertEquals(WidgetStructure.STRIP_ROW, tightStrip.structure)
+        assertFalse(tightStrip.showAction)
+
+        val tallColumn = WidgetLayoutSpec.plan(72, 220, WidgetStyle.FOCUS, hasChecklist = false)
+        assertEquals(WidgetStructure.COLUMN, tallColumn.structure)
+        assertTrue(tallColumn.useBalanceSpacers)
+        assertTrue(tallColumn.showName)
+        assertTrue(tallColumn.showAction)
     }
 
     @Test
-    fun `styles fall back only where their hierarchy cannot be rendered`() {
-        assertEquals(WidgetStyle.POSTER, resolvedStyle(WidgetSize.SQUARE, WidgetStyle.POSTER, hasChecklist = false))
-        assertEquals(WidgetStyle.POSTER, resolvedStyle(WidgetSize.HERO, WidgetStyle.POSTER, hasChecklist = false))
-        assertEquals(WidgetStyle.FOCUS, resolvedStyle(WidgetSize.HERO, WidgetStyle.CHECKLIST, hasChecklist = false))
-        assertEquals(WidgetStyle.CHECKLIST, resolvedStyle(WidgetSize.HERO, WidgetStyle.CHECKLIST, hasChecklist = true))
+    fun `style resolution respects ember poster checklist and long Vietnamese actions`() {
+        val emberHero = WidgetLayoutSpec.plan(240, 140, WidgetStyle.EMBER, hasChecklist = false)
+        assertFalse(emberHero.showName)
+        assertFalse(emberHero.showAction)
+
+        val posterSquare = WidgetLayoutSpec.plan(140, 140, WidgetStyle.POSTER, hasChecklist = false)
+        assertEquals(WidgetStructure.POSTER_STACK, posterSquare.structure)
+        assertTrue(posterSquare.showName)
+        assertTrue(posterSquare.showAction)
+        assertFalse(posterSquare.showProgress)
+
+        val posterHero = WidgetLayoutSpec.plan(240, 140, WidgetStyle.POSTER, hasChecklist = true)
+        assertEquals(WidgetStructure.HERO, posterHero.structure)
+        assertTrue(posterHero.showName)
+        assertTrue(posterHero.showAction)
+        assertFalse(posterHero.showEyebrow)
+        assertFalse(posterHero.showStatus)
+        assertFalse(posterHero.showProgress)
+
+        val checklistSquare = WidgetLayoutSpec.plan(140, 140, WidgetStyle.CHECKLIST, hasChecklist = true)
+        assertTrue(checklistSquare.showProgress)
+
+        val shortAction = WidgetLayoutSpec.plan(140, 140, WidgetStyle.FOCUS, hasChecklist = false, actionCharCount = 6)
+        val longViAction = WidgetLayoutSpec.plan(140, 140, WidgetStyle.FOCUS, hasChecklist = false, actionCharCount = 16)
+        assertTrue(longViAction.actionSp < shortAction.actionSp)
+
+        assertEquals(WidgetStyle.FOCUS, resolvedStyle(240, 140, WidgetStyle.CHECKLIST, hasChecklist = false))
+        assertEquals(WidgetStyle.CHECKLIST, resolvedStyle(240, 140, WidgetStyle.CHECKLIST, hasChecklist = true))
+        assertEquals(WidgetStyle.POSTER, resolvedStyle(240, 140, WidgetStyle.POSTER, hasChecklist = false))
     }
 
     @Test

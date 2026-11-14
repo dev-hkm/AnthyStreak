@@ -12,17 +12,21 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.SizeF
+import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
+import androidx.core.content.ContextCompat
 import com.hkm.streakwidget.MainActivity
 import com.hkm.streakwidget.R
 import com.hkm.streakwidget.data.HabitRepository
 import com.hkm.streakwidget.data.localizedFor
 import com.hkm.streakwidget.domain.StreakCalculator
 import com.hkm.streakwidget.model.Habit
+import com.hkm.streakwidget.model.VisualTheme
 import java.util.concurrent.Executors
+import kotlin.math.roundToInt
 
-/** Responsive, per-goal launcher widget with a finite best-effort check-in ritual. */
+/** Responsive, per-goal launcher widget that adapts its structure and typography to any frame. */
 class StreakAppWidgetProvider : AppWidgetProvider() {
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
@@ -98,9 +102,7 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
 
             val state = WidgetRenderStateFactory.create(habit, StreakCalculator.todayString(), labels)
             val views = createResponsiveViews(
-                context = context,
-                localizedContext = localizedContext,
-                labels = labels,
+                context = localizedContext,
                 widgetId = widgetId,
                 options = manager.getAppWidgetOptions(widgetId),
                 habit = habit,
@@ -114,8 +116,6 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
 
     private fun createResponsiveViews(
         context: Context,
-        localizedContext: Context,
-        labels: WidgetLabels,
         widgetId: Int,
         options: Bundle,
         habit: Habit?,
@@ -123,84 +123,134 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
         selectedStyle: WidgetStyle,
         repository: HabitRepository
     ): RemoteViews {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val variants = linkedMapOf<SizeF, RemoteViews>()
-            WidgetLayoutSpec.responsiveSizes.forEach { size ->
-                variants[SizeF(size.minWidthDp.toFloat(), size.minHeightDp.toFloat())] =
-                    createViewsForSize(localizedContext, widgetId, size, habit, state, selectedStyle, repository)
-            }
-            return RemoteViews(variants)
-        }
-
-        val width = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0)
-        val height = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0)
-        return createViewsForSize(
-            localizedContext,
-            widgetId,
-            WidgetLayoutSpec.classify(width, height),
-            habit,
-            state,
-            selectedStyle,
-            repository
-        )
-    }
-
-    private fun createViewsForSize(
-        context: Context,
-        widgetId: Int,
-        size: WidgetSize,
-        habit: Habit?,
-        state: WidgetRenderState,
-        selectedStyle: WidgetStyle,
-        repository: HabitRepository
-    ): RemoteViews {
-        val style = resolvedStyle(
-            size = size,
-            selected = selectedStyle,
-            hasChecklist = habit?.isWidgetChecklistEligible() == true
-        )
-        val views = RemoteViews(context.packageName, size.layoutRes())
-        val hasLitFlame = state.visualState != WidgetVisualState.EMPTY && (state.streak > 0 || state.isCompleted)
-        if (hasLitFlame) {
-            val accent = Color.parseColor(state.accentHex)
-            views.setInt(R.id.widget_flame_glow, "setColorFilter", accent)
-            views.setInt(R.id.widget_flame_outer, "setColorFilter", accent)
-            views.setInt(R.id.widget_flame_mid, "setColorFilter", lightenedAccent(accent))
-            views.setInt(R.id.widget_flame_inner, "setColorFilter", Color.WHITE)
-        }
-
-        views.setTextViewText(
-            R.id.widget_eyebrow,
-            context.getString(if (habit == null) R.string.widget_eyebrow_empty else R.string.widget_eyebrow_today)
-        )
-        views.setTextViewText(R.id.widget_streak_count, state.streak.toString())
-        views.setTextViewText(R.id.widget_streak_label, state.streakLabel)
-        views.setTextViewText(R.id.widget_habit_name, state.title)
-        views.setTextViewText(R.id.widget_status, state.status)
-        views.setTextViewText(R.id.widget_task_progress, state.taskProgress ?: "")
-        views.setTextViewText(R.id.widget_check_in, state.actionLabel)
-
-        val showsDetail = style == WidgetStyle.FOCUS || style == WidgetStyle.CHECKLIST
-        val showsEyebrow = showsDetail && (size == WidgetSize.WIDE || size == WidgetSize.HERO)
-        val showsProgress = style == WidgetStyle.CHECKLIST &&
-            state.taskProgress != null &&
-            (size == WidgetSize.COMPACT || size == WidgetSize.WIDE || size == WidgetSize.SQUARE ||
-                size == WidgetSize.HERO)
-        val showsStatus = showsDetail && !showsProgress &&
-            (size == WidgetSize.WIDE || size == WidgetSize.HERO || size == WidgetSize.SQUARE)
-        val showsAction = style != WidgetStyle.EMBER
-        views.setViewVisibility(R.id.widget_eyebrow, if (showsEyebrow) View.VISIBLE else View.GONE)
-        views.setViewVisibility(R.id.widget_habit_name, if (showsDetail) View.VISIBLE else View.GONE)
-        views.setViewVisibility(R.id.widget_status, if (showsStatus) View.VISIBLE else View.GONE)
-        views.setViewVisibility(R.id.widget_task_progress, if (showsProgress) View.VISIBLE else View.GONE)
-        views.setViewVisibility(R.id.widget_check_in, if (showsAction) View.VISIBLE else View.GONE)
-
         val openIntent = openAppIntent(context, widgetId, habit?.id)
         val primaryIntent = if (state.primaryAction == WidgetPrimaryAction.CHECK_IN && habit != null) {
             checkInIntent(context, repository, widgetId, habit.id)
         } else {
             openIntent
         }
+
+        val minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0)
+        val minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0)
+        val maxWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, 0)
+        val maxHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 0)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val launcherFrames = extractSizeFrames(options)
+            val responsiveFrames = WidgetLayoutSpec.responsiveFrames(launcherFrames, minWidth, minHeight)
+            val variants = linkedMapOf<SizeF, RemoteViews>()
+            responsiveFrames.forEach { frame ->
+                variants[SizeF(frame.widthDp.toFloat(), frame.heightDp.toFloat())] = createViewsForFrame(
+                    context = context,
+                    widthDp = frame.widthDp,
+                    heightDp = frame.heightDp,
+                    habit = habit,
+                    state = state,
+                    selectedStyle = selectedStyle,
+                    openIntent = openIntent,
+                    primaryIntent = primaryIntent
+                )
+            }
+            return RemoteViews(variants)
+        }
+
+        val portraitW = if (minWidth > 0) minWidth else WidgetLayoutSpec.DEFAULT_WIDTH_DP
+        val portraitH = if (maxHeight > 0) maxHeight else minHeight
+        val landscapeW = if (maxWidth > 0) maxWidth else portraitW
+        val landscapeH = if (minHeight > 0) minHeight else portraitH
+        if (landscapeW != portraitW || landscapeH != portraitH) {
+            val landscapeViews = createViewsForFrame(
+                context = context,
+                widthDp = landscapeW,
+                heightDp = landscapeH,
+                habit = habit,
+                state = state,
+                selectedStyle = selectedStyle,
+                openIntent = openIntent,
+                primaryIntent = primaryIntent
+            )
+            val portraitViews = createViewsForFrame(
+                context = context,
+                widthDp = portraitW,
+                heightDp = portraitH,
+                habit = habit,
+                state = state,
+                selectedStyle = selectedStyle,
+                openIntent = openIntent,
+                primaryIntent = primaryIntent
+            )
+            return RemoteViews(landscapeViews, portraitViews)
+        }
+
+        return createViewsForFrame(
+            context = context,
+            widthDp = minWidth,
+            heightDp = minHeight,
+            habit = habit,
+            state = state,
+            selectedStyle = selectedStyle,
+            openIntent = openIntent,
+            primaryIntent = primaryIntent
+        )
+    }
+
+    @Suppress("DEPRECATION")
+    private fun extractSizeFrames(options: Bundle): List<WidgetFrame> {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return emptyList()
+        return options.getParcelableArrayList<SizeF>(AppWidgetManager.OPTION_APPWIDGET_SIZES)
+            .orEmpty()
+            .filter { it.width.isFinite() && it.height.isFinite() }
+            .map { WidgetFrame(it.width.roundToInt(), it.height.roundToInt()) }
+    }
+
+    private fun createViewsForFrame(
+        context: Context,
+        widthDp: Int,
+        heightDp: Int,
+        habit: Habit?,
+        state: WidgetRenderState,
+        selectedStyle: WidgetStyle,
+        openIntent: PendingIntent,
+        primaryIntent: PendingIntent
+    ): RemoteViews {
+        val hasChecklist = habit?.isWidgetChecklistEligible() == true
+        val plan = WidgetLayoutSpec.plan(
+            widthDp = widthDp,
+            heightDp = heightDp,
+            style = selectedStyle,
+            hasChecklist = hasChecklist,
+            countDigits = state.streak.toString().length,
+            actionCharCount = state.actionLabel.length
+        )
+
+        val views = RemoteViews(context.packageName, plan.structure.layoutRes())
+        applyPlan(views, context, plan, state)
+
+        // Match FocusCard in MainScreen.kt: the flame/bonsai lights up vividly only once today is completed.
+        val lit = state.visualState != WidgetVisualState.EMPTY && state.isCompleted
+        val heroLayers = WidgetFlameRenderer.layers(
+            accent = Color.parseColor(state.accentHex),
+            lit = lit,
+            theme = state.theme,
+            streak = state.streak
+        )
+        views.setImageViewBitmap(R.id.widget_flame_glow, heroLayers.glow)
+        views.setImageViewBitmap(R.id.widget_flame_outer, heroLayers.outer)
+        views.setImageViewBitmap(R.id.widget_flame_mid, heroLayers.mid)
+        views.setImageViewBitmap(R.id.widget_flame_inner, heroLayers.inner)
+
+        val streakLabelText = if (plan.useLongStreakLabel) state.longStreakLabel else state.streakLabel
+        views.setTextViewText(
+            R.id.widget_eyebrow,
+            context.getString(if (habit == null) R.string.widget_eyebrow_empty else R.string.widget_eyebrow_today)
+        )
+        views.setTextViewText(R.id.widget_streak_count, state.streak.toString())
+        views.setTextViewText(R.id.widget_streak_label, streakLabelText)
+        views.setTextViewText(R.id.widget_habit_name, state.title)
+        views.setTextViewText(R.id.widget_status, state.status)
+        views.setTextViewText(R.id.widget_task_progress, state.taskProgress ?: "")
+        views.setTextViewText(R.id.widget_check_in, state.actionLabel)
+
         views.setOnClickPendingIntent(R.id.widget_background, openIntent)
         views.setOnClickPendingIntent(R.id.widget_check_in, primaryIntent)
         views.setOnClickPendingIntent(R.id.widget_flame_outer, primaryIntent)
@@ -209,12 +259,108 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
         val description = if (habit == null) {
             context.getString(R.string.widget_cd_empty)
         } else {
-            context.getString(R.string.widget_cd_summary, habit.name, state.streak, state.streakLabel)
+            context.getString(R.string.widget_cd_summary, habit.name, state.streak, streakLabelText)
         }
         views.setContentDescription(R.id.widget_background, description)
         views.setContentDescription(R.id.widget_flame_outer, state.actionLabel)
         views.setContentDescription(R.id.widget_check_in, state.actionLabel)
         return views
+    }
+
+    private fun applyPlan(
+        views: RemoteViews,
+        context: Context,
+        plan: WidgetPlan,
+        state: WidgetRenderState
+    ) {
+        val density = context.resources.displayMetrics.density
+        val padPx = (plan.paddingDp * density).roundToInt()
+        views.setViewPadding(R.id.widget_background, padPx, padPx, padPx, padPx)
+        views.setInt(
+            R.id.widget_background,
+            "setBackgroundResource",
+            if (plan.compactCorners) R.drawable.widget_bg_shape_compact else R.drawable.widget_bg_shape
+        )
+
+        val fontScale = context.resources.configuration.fontScale.coerceIn(1f, 1.12f)
+        fun setBoundedTextSize(viewId: Int, sizeSp: Float) {
+            views.setTextViewTextSize(viewId, TypedValue.COMPLEX_UNIT_DIP, sizeSp * fontScale)
+        }
+
+        setBoundedTextSize(R.id.widget_streak_count, plan.countSp)
+        setBoundedTextSize(R.id.widget_streak_label, plan.labelSp)
+        setBoundedTextSize(R.id.widget_eyebrow, plan.eyebrowSp)
+        setBoundedTextSize(R.id.widget_habit_name, plan.nameSp)
+        setBoundedTextSize(R.id.widget_status, plan.statusSp)
+        setBoundedTextSize(R.id.widget_task_progress, plan.statusSp)
+        setBoundedTextSize(R.id.widget_check_in, plan.actionSp)
+        views.setInt(R.id.widget_habit_name, "setMaxLines", plan.nameMaxLines)
+
+        val isPendingCheckIn = state.primaryAction == WidgetPrimaryAction.CHECK_IN
+        views.setInt(
+            R.id.widget_check_in,
+            "setBackgroundResource",
+            if (isPendingCheckIn) R.drawable.widget_action_shape else R.drawable.widget_action_completed_shape
+        )
+        views.setTextColor(
+            R.id.widget_check_in,
+            ContextCompat.getColor(
+                context,
+                if (isPendingCheckIn) R.color.widget_action_text else R.color.widget_action_completed_text
+            )
+        )
+
+        views.setViewVisibility(R.id.widget_streak_label, if (plan.showLabel) View.VISIBLE else View.GONE)
+        views.setViewVisibility(R.id.widget_eyebrow, if (plan.showEyebrow) View.VISIBLE else View.GONE)
+        views.setViewVisibility(R.id.widget_habit_name, if (plan.showName) View.VISIBLE else View.GONE)
+        views.setViewVisibility(R.id.widget_status, if (plan.showStatus) View.VISIBLE else View.GONE)
+        views.setViewVisibility(R.id.widget_task_progress, if (plan.showProgress) View.VISIBLE else View.GONE)
+        views.setViewVisibility(R.id.widget_check_in, if (plan.showAction) View.VISIBLE else View.GONE)
+
+        val showDetailContainer = plan.showEyebrow || plan.showName || plan.showStatus || plan.showProgress
+        if (plan.structure == WidgetStructure.STRIP_ROW ||
+            plan.structure == WidgetStructure.POSTER_STACK ||
+            plan.structure == WidgetStructure.HERO
+        ) {
+            views.setViewVisibility(
+                R.id.widget_detail_box,
+                if (showDetailContainer) View.VISIBLE else View.GONE
+            )
+        }
+
+        if (plan.structure == WidgetStructure.COLUMN) {
+            val spacerVis = if (plan.useBalanceSpacers) View.VISIBLE else View.GONE
+            views.setViewVisibility(R.id.widget_top_spacer, spacerVis)
+            views.setViewVisibility(R.id.widget_bottom_spacer, spacerVis)
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (plan.showAction) {
+                views.setViewLayoutHeight(
+                    R.id.widget_check_in,
+                    plan.actionHeightDp.toFloat(),
+                    TypedValue.COMPLEX_UNIT_DIP
+                )
+            }
+            if (plan.structure == WidgetStructure.STRIP_ROW) {
+                views.setViewLayoutWidth(
+                    R.id.widget_flame_box,
+                    plan.flameSizeDp.toFloat(),
+                    TypedValue.COMPLEX_UNIT_DIP
+                )
+            }
+            if (plan.structure == WidgetStructure.HERO ||
+                plan.structure == WidgetStructure.COMPACT_SPLIT ||
+                plan.structure == WidgetStructure.STRIP_ROW
+            ) {
+                views.setViewLayoutMargin(
+                    R.id.widget_detail_box,
+                    RemoteViews.MARGIN_START,
+                    plan.gapDp.toFloat(),
+                    TypedValue.COMPLEX_UNIT_DIP
+                )
+            }
+        }
     }
 
     private fun completeTodayFromWidget(context: Context, widgetId: Int, habitId: String?, token: String?) {
@@ -252,39 +398,67 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
 
         val settledState = WidgetRenderStateFactory.create(updatedTarget, today, labels)
         try {
-            playIgnitionFrames(context, widgetId, settledState)
+            playIgnitionFrames(localizedContext, widgetId, settledState, repository.getWidgetStyle(widgetId))
         } finally {
             updateAllWidgets(context)
         }
     }
 
-    private fun playIgnitionFrames(context: Context, widgetId: Int, state: WidgetRenderState) {
+    private fun playIgnitionFrames(
+        context: Context,
+        widgetId: Int,
+        state: WidgetRenderState,
+        selectedStyle: WidgetStyle
+    ) {
         val manager = AppWidgetManager.getInstance(context)
         val options = manager.getAppWidgetOptions(widgetId)
-        val size = WidgetLayoutSpec.classify(
-            options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0),
-            options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0)
+        val minW = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0)
+        val minH = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0)
+        val frame = WidgetLayoutSpec.closestFrame(extractSizeFrames(options), minW, minH)
+            ?: WidgetFrame(minW, minH)
+        val plan = WidgetLayoutSpec.plan(
+            widthDp = frame.widthDp,
+            heightDp = frame.heightDp,
+            style = selectedStyle,
+            hasChecklist = false,
+            countDigits = state.streak.toString().length,
+            actionCharCount = state.actionLabel.length
         )
-        val accent = Color.parseColor(state.accentHex)
-        var elapsed = 0L
-        for (frame in WidgetIgnitionSequence.frames()) {
-            val waitMillis = frame.atMillis - elapsed
-            if (waitMillis > 0L) Thread.sleep(waitMillis)
-            elapsed = frame.atMillis
 
-            val partial = RemoteViews(context.packageName, size.layoutRes()).apply {
-                setInt(R.id.widget_flame_glow, "setColorFilter", accent)
-                setInt(R.id.widget_flame_outer, "setColorFilter", accent)
-                setInt(R.id.widget_flame_mid, "setColorFilter", lightenedAccent(accent))
-                setInt(R.id.widget_flame_inner, "setColorFilter", Color.WHITE)
-                setInt(R.id.widget_flame_glow, "setImageAlpha", frame.glowAlpha)
-                setInt(R.id.widget_flame_outer, "setImageAlpha", frame.outerAlpha)
-                setInt(R.id.widget_flame_mid, "setImageAlpha", frame.midAlpha)
-                setInt(R.id.widget_flame_inner, "setImageAlpha", frame.innerAlpha)
-                setTextViewText(R.id.widget_streak_count, state.streak.toString())
-                setTextViewText(R.id.widget_streak_label, state.streakLabel)
-                setTextViewText(R.id.widget_status, state.status)
-                setTextViewText(R.id.widget_check_in, state.actionLabel)
+        val accent = Color.parseColor(state.accentHex)
+        val heroLayers = WidgetFlameRenderer.layers(
+            accent = accent,
+            lit = true,
+            theme = state.theme,
+            streak = state.streak
+        )
+        val labelText = if (plan.useLongStreakLabel) state.longStreakLabel else state.streakLabel
+        var elapsed = 0L
+        WidgetIgnitionSequence.frames().forEachIndexed { index, animFrame ->
+            val waitMillis = animFrame.atMillis - elapsed
+            if (waitMillis > 0L) Thread.sleep(waitMillis)
+            elapsed = animFrame.atMillis
+
+            val partial = RemoteViews(context.packageName, plan.structure.layoutRes()).apply {
+                if (index == 0) {
+                    setImageViewBitmap(R.id.widget_flame_glow, heroLayers.glow)
+                    setImageViewBitmap(R.id.widget_flame_outer, heroLayers.outer)
+                    setImageViewBitmap(R.id.widget_flame_mid, heroLayers.mid)
+                    setImageViewBitmap(R.id.widget_flame_inner, heroLayers.inner)
+                    setTextViewText(R.id.widget_streak_count, state.streak.toString())
+                    setTextViewText(R.id.widget_streak_label, labelText)
+                    setTextViewText(R.id.widget_status, state.status)
+                    setTextViewText(R.id.widget_check_in, state.actionLabel)
+                    setInt(R.id.widget_check_in, "setBackgroundResource", R.drawable.widget_action_completed_shape)
+                    setTextColor(
+                        R.id.widget_check_in,
+                        ContextCompat.getColor(context, R.color.widget_action_completed_text)
+                    )
+                }
+                setInt(R.id.widget_flame_glow, "setImageAlpha", animFrame.glowAlpha)
+                setInt(R.id.widget_flame_outer, "setImageAlpha", animFrame.outerAlpha)
+                setInt(R.id.widget_flame_mid, "setImageAlpha", animFrame.midAlpha)
+                setInt(R.id.widget_flame_inner, "setImageAlpha", animFrame.innerAlpha)
             }
             manager.partiallyUpdateAppWidget(widgetId, partial)
         }
@@ -357,16 +531,6 @@ class StreakAppWidgetProvider : AppWidgetProvider() {
     }
 }
 
-/** Mixes an accent toward white so the widget mid-flame reads as hot glow. */
-private fun lightenedAccent(accent: Int): Int {
-    fun mix(channel: Int): Int = (channel + (255 - channel) * 0.45f).toInt().coerceIn(0, 255)
-    return Color.rgb(
-        mix(Color.red(accent)),
-        mix(Color.green(accent)),
-        mix(Color.blue(accent))
-    )
-}
-
 private fun Habit.reconciledForToday(today: String = StreakCalculator.todayString()): Habit {
     val reconciledDebts = StreakCalculator.reconcileDebts(
         startDate = startDate,
@@ -392,16 +556,18 @@ private fun localizedWidgetLabels(resources: Resources): WidgetLabels = WidgetLa
     open = resources.getString(R.string.widget_open),
     day = resources.getQuantityString(R.plurals.widget_days, 1, 1),
     days = resources.getQuantityString(R.plurals.widget_days, 2, 2),
+    dayStreak = resources.getQuantityString(R.plurals.today_streak_label, 1),
+    daysStreak = resources.getQuantityString(R.plurals.today_streak_label, 2),
     taskProgress = resources.getString(R.string.widget_task_progress)
 )
 
-private fun WidgetSize.layoutRes(): Int = when (this) {
-    WidgetSize.TILE -> R.layout.widget_layout_tile
-    WidgetSize.STRIP -> R.layout.widget_layout_strip
-    WidgetSize.TALL -> R.layout.widget_layout_tall
-    WidgetSize.COMPACT -> R.layout.widget_layout_compact
-    WidgetSize.SQUARE -> R.layout.widget_layout_square
-    WidgetSize.WIDE -> R.layout.widget_layout_wide
-    WidgetSize.TALL_HERO -> R.layout.widget_layout_tall_hero
-    WidgetSize.HERO -> R.layout.widget_layout_hero
+private fun WidgetStructure.layoutRes(): Int = when (this) {
+    WidgetStructure.MICRO_ROW -> R.layout.widget_layout_micro_row
+    WidgetStructure.MICRO_STACK -> R.layout.widget_layout_micro_stack
+    WidgetStructure.STRIP_ROW -> R.layout.widget_layout_strip_row
+    WidgetStructure.COMPACT_SPLIT -> R.layout.widget_layout_compact_split
+    WidgetStructure.COLUMN -> R.layout.widget_layout_column
+    WidgetStructure.SQUARE -> R.layout.widget_layout_square
+    WidgetStructure.POSTER_STACK -> R.layout.widget_layout_poster
+    WidgetStructure.HERO -> R.layout.widget_layout_hero
 }

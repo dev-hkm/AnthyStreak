@@ -3,4 +3,12 @@
     <style name="WidgetText">
         <item name="android:fontFamily">@font/eb_garamond_family</item>
     </style>
+
+    <style name="WidgetTextDisplay">
+        <item name="android:fontFamily">@font/eb_garamond_extra_bold</item>
+    </style>
+
+    <style name="WidgetTextMeta">
+        <item name="android:fontFamily">@font/eb_garamond_semi_bold</item>
+    </style>
 </resources>

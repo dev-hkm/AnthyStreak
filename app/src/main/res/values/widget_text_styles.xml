@@ -4,4 +4,12 @@
     <style name="WidgetText">
         <item name="android:fontFamily">serif</item>
     </style>
+
+    <style name="WidgetTextDisplay" parent="WidgetText">
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="WidgetTextMeta" parent="WidgetText">
+        <item name="android:textStyle">bold</item>
+    </style>
 </resources>

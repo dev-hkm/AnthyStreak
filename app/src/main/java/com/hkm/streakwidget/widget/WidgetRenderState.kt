@@ -3,6 +3,7 @@ package com.hkm.streakwidget.widget
 import com.hkm.streakwidget.domain.StreakCalculator
 import com.hkm.streakwidget.model.GoalType
 import com.hkm.streakwidget.model.Habit
+import com.hkm.streakwidget.model.VisualTheme
 
 /**
  * Presentation-only widget data. Keeping this separate from RemoteViews makes the
@@ -13,11 +14,13 @@ internal data class WidgetRenderState(
     val title: String,
     val streak: Int,
     val streakLabel: String,
+    val longStreakLabel: String,
     val status: String,
     val taskProgress: String?,
     val actionLabel: String,
     val primaryAction: WidgetPrimaryAction,
     val accentHex: String,
+    val theme: VisualTheme,
     val isCompleted: Boolean
 )
 
@@ -37,6 +40,8 @@ internal data class WidgetLabels(
     val open: String = "OPEN",
     val day: String = "DAY",
     val days: String = "DAYS",
+    val dayStreak: String = "day streak",
+    val daysStreak: String = "days streak",
     val taskProgress: String = "%1\$d OF %2\$d TASKS"
 )
 
@@ -85,11 +90,13 @@ internal object WidgetRenderStateFactory {
                 title = labels.emptyTitle,
                 streak = 0,
                 streakLabel = labels.days,
+                longStreakLabel = labels.daysStreak,
                 status = labels.emptyStatus,
                 taskProgress = null,
                 actionLabel = labels.createGoal,
                 primaryAction = WidgetPrimaryAction.OPEN_APP,
                 accentHex = "#777777",
+                theme = VisualTheme.FLAME,
                 isCompleted = false
             )
         }
@@ -117,6 +124,7 @@ internal object WidgetRenderStateFactory {
             title = habit.name,
             streak = streak,
             streakLabel = if (streak == 1) labels.day else labels.days,
+            longStreakLabel = if (streak == 1) labels.dayStreak else labels.daysStreak,
             status = when {
                 completed -> labels.secured
                 paused -> labels.paused
@@ -130,6 +138,7 @@ internal object WidgetRenderStateFactory {
             },
             primaryAction = if (completed || paused) WidgetPrimaryAction.OPEN_APP else WidgetPrimaryAction.CHECK_IN,
             accentHex = normalizeAccent(habit.colorHex),
+            theme = habit.theme,
             isCompleted = completed
         )
     }
